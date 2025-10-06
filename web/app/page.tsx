@@ -29,6 +29,7 @@ export default function Home() {
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [matchups, setMatchups] = useState<Record<number, WeekMatchup[]>>({});
   const [activeTab, setActiveTab] = useState('overview');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Calculated data
   const [standingsOverTime, setStandingsOverTime] = useState<Record<string, number[]>>({});
@@ -122,7 +123,8 @@ export default function Home() {
         {/* Tabs */}
         <div className="border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            {/* Desktop Navigation */}
+            <nav className="-mb-px hidden md:flex space-x-8" aria-label="Tabs">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -138,6 +140,50 @@ export default function Home() {
                 </button>
               ))}
             </nav>
+
+            {/* Mobile Navigation */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="flex items-center justify-between w-full py-4 text-left"
+                aria-expanded={mobileMenuOpen}
+              >
+                <span className="text-sm font-medium text-gray-900">
+                  <span className="mr-2">{tabs.find(t => t.id === activeTab)?.icon}</span>
+                  {tabs.find(t => t.id === activeTab)?.name}
+                </span>
+                <svg
+                  className={`h-5 w-5 text-gray-500 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {mobileMenuOpen && (
+                <div className="pb-3 space-y-1">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`${
+                        activeTab === tab.id
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                      } block w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors`}
+                    >
+                      <span className="mr-2">{tab.icon}</span>
+                      {tab.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

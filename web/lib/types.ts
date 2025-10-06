@@ -87,6 +87,7 @@ export interface PlayEveryoneStats {
   username: string;
   teamName: string;
   actualWins: number;
+  actualLosses: number;
   playAllWins: number;
   playAllLosses: number;
   difference: number;

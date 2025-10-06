@@ -6,6 +6,7 @@ interface PlayEveryoneData {
   username: string;
   teamName: string;
   actualWins: number;
+  actualLosses: number;
   playAllWins: number;
   playAllLosses: number;
   difference: number;
@@ -106,13 +107,13 @@ export default function PlayEveryoneAnalysis({ data }: PlayEveryoneAnalysisProps
                 Team
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actual Wins
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Play-All Wins
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Play-All Record
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Real Record
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Expected Wins
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Luck Factor
@@ -123,6 +124,10 @@ export default function PlayEveryoneAnalysis({ data }: PlayEveryoneAnalysisProps
             {sortedData.map((team, index) => {
               const isLucky = team.difference > 1;
               const isUnlucky = team.difference < -1;
+
+              // Calculate expected wins (play-all wins normalized to weekly basis)
+              const numTeams = sortedData.length;
+              const expectedWins = team.playAllWins / (numTeams - 1);
 
               return (
                 <tr key={team.username}>
@@ -136,13 +141,13 @@ export default function PlayEveryoneAnalysis({ data }: PlayEveryoneAnalysisProps
                     <div className="text-sm text-gray-500">@{team.username}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                    {team.actualWins}
+                    {team.playAllWins}-{team.playAllLosses}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                    {team.playAllWins}
+                    {team.actualWins}-{team.actualLosses}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                    {team.playAllWins}-{team.playAllLosses}
+                    {expectedWins.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <span

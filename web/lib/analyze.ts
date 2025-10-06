@@ -266,6 +266,7 @@ export function calculatePlayEveryoneStats(teams: TeamStats[]): Array<{
   username: string;
   teamName: string;
   actualWins: number;
+  actualLosses: number;
   playAllWins: number;
   playAllLosses: number;
   difference: number;
@@ -275,6 +276,7 @@ export function calculatePlayEveryoneStats(teams: TeamStats[]): Array<{
     username: string;
     teamName: string;
     actualWins: number;
+    actualLosses: number;
     playAllWins: number;
     playAllLosses: number;
     difference: number;
@@ -305,6 +307,7 @@ export function calculatePlayEveryoneStats(teams: TeamStats[]): Array<{
       username: team.username,
       teamName: team.teamName,
       actualWins: team.wins,
+      actualLosses: team.losses,
       playAllWins,
       playAllLosses,
       difference: team.wins - playAllWins / (teams.length - 1), // Normalize to per-week basis
