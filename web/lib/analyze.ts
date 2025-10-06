@@ -38,9 +38,7 @@ export function calculateTeamStats(data: LeagueData): TeamStats[] {
   });
 
   // Calculate weekly scores and results
-  Object.entries(data.matchups).forEach(([weekNum, matchups]) => {
-    const week = parseInt(weekNum);
-
+  Object.entries(data.matchups).forEach(([, matchups]) => {
     // Group matchups by matchup_id
     const matchupGroups: Record<number, SleeperMatchup[]> = {};
     matchups.forEach((matchup) => {

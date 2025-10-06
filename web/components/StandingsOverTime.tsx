@@ -24,7 +24,7 @@ export default function StandingsOverTime({ standingsData, teams }: StandingsOve
 
   // Transform data for recharts
   const chartData = weeks.map((week, index) => {
-    const weekData: any = { week: `W${week}` };
+    const weekData: Record<string, string | number> = { week: `W${week}` };
     Object.keys(standingsData).forEach((username) => {
       weekData[username] = standingsData[username][index];
     });

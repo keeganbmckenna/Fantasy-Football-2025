@@ -29,8 +29,19 @@ export interface SleeperMatchup {
   players?: string[];
 }
 
+export interface SleeperLeague {
+  league_id: string;
+  name: string;
+  season: string;
+  status: string;
+  settings?: {
+    leg?: number;
+    last_scored_leg?: number;
+  };
+}
+
 export interface LeagueData {
-  league: any;
+  league: SleeperLeague;
   users: SleeperUser[];
   rosters: SleeperRoster[];
   matchups: Record<number, SleeperMatchup[]>;
@@ -70,4 +81,13 @@ export interface WeekMatchup {
     rosterId: number;
   };
   winner?: 'team1' | 'team2' | 'tie';
+}
+
+export interface PlayEveryoneStats {
+  username: string;
+  teamName: string;
+  actualWins: number;
+  playAllWins: number;
+  playAllLosses: number;
+  difference: number;
 }

@@ -23,7 +23,7 @@ export default function PointsVsMedian({ differenceData, teams }: PointsVsMedian
 
   // Transform data for recharts
   const chartData = weeks.map((week, index) => {
-    const weekData: any = {
+    const weekData: Record<string, string | number> = {
       week: `W${week}`,
       median: 0 // Median is always 0 in difference view
     };

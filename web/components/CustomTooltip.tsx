@@ -1,16 +1,17 @@
 'use client';
 
+interface PayloadItem {
+  dataKey: string;
+  value: number;
+  color: string;
+}
+
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: Array<{
-    dataKey: string;
-    value: number;
-    color: string;
-  }>;
+  payload?: PayloadItem[];
   label?: string;
   teams: Array<{ username: string; teamName: string; color: string }>;
   valueFormatter?: (value: number) => string;
-  valueLabel?: string;
   sortDescending?: boolean;
 }
 
@@ -20,7 +21,6 @@ export default function CustomTooltip({
   label,
   teams,
   valueFormatter = (value: number) => value.toString(),
-  valueLabel = 'Value',
   sortDescending = true,
 }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) {
@@ -28,10 +28,10 @@ export default function CustomTooltip({
   }
 
   // Create array of team data with values
-  const teamData = payload.map((entry: any) => ({
-    username: entry.dataKey as string,
-    value: entry.value as number,
-    color: entry.color as string,
+  const teamData = payload.map((entry) => ({
+    username: entry.dataKey,
+    value: entry.value,
+    color: entry.color,
   }));
 
   // Sort by value
@@ -48,7 +48,7 @@ export default function CustomTooltip({
         {label}
       </p>
       <div className="space-y-1 overflow-y-auto flex-1" style={{ overflowY: 'auto' }}>
-        {sortedTeams.map((item, index) => {
+        {sortedTeams.map((item) => {
           const team = teams.find((t) => t.username === item.username);
           const teamName = team?.teamName || item.username;
 

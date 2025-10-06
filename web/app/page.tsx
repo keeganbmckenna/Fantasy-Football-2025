@@ -9,7 +9,7 @@ import CumulativeScores from '@/components/CumulativeScores';
 import PointsVsMedian from '@/components/PointsVsMedian';
 import WeeklyRankingsHeatmap from '@/components/WeeklyRankingsHeatmap';
 import PlayEveryoneAnalysis from '@/components/PlayEveryoneAnalysis';
-import { LeagueData, TeamStats, WeekMatchup } from '@/lib/types';
+import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats } from '@/lib/types';
 import {
   calculateTeamStats,
   getWeeklyMatchups,
@@ -33,7 +33,7 @@ export default function Home() {
   const [cumulativeScores, setCumulativeScores] = useState<Record<string, number[]>>({});
   const [differenceFromMedian, setDifferenceFromMedian] = useState<Record<string, number[]>>({});
   const [weeklyRankings, setWeeklyRankings] = useState<Record<string, number[]>>({});
-  const [playEveryoneData, setPlayEveryoneData] = useState<any[]>([]);
+  const [playEveryoneData, setPlayEveryoneData] = useState<PlayEveryoneStats[]>([]);
 
   useEffect(() => {
     async function fetchData() {
