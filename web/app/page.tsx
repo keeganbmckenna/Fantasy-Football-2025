@@ -9,7 +9,8 @@ import CumulativeScores from '@/components/CumulativeScores';
 import PointsVsMedian from '@/components/PointsVsMedian';
 import WeeklyRankingsHeatmap from '@/components/WeeklyRankingsHeatmap';
 import PlayEveryoneAnalysis from '@/components/PlayEveryoneAnalysis';
-import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats } from '@/lib/types';
+import WeeklyPlayAll from '@/components/WeeklyPlayAll';
+import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats } from '@/lib/types';
 import {
   calculateTeamStats,
   getWeeklyMatchups,
@@ -18,6 +19,7 @@ import {
   calculateDifferenceFromMedian,
   calculateWeeklyRankings,
   calculatePlayEveryoneStats,
+  calculateWeeklyPlayAll,
 } from '@/lib/analyze';
 
 export default function Home() {
@@ -34,6 +36,7 @@ export default function Home() {
   const [differenceFromMedian, setDifferenceFromMedian] = useState<Record<string, number[]>>({});
   const [weeklyRankings, setWeeklyRankings] = useState<Record<string, number[]>>({});
   const [playEveryoneData, setPlayEveryoneData] = useState<PlayEveryoneStats[]>([]);
+  const [weeklyPlayAllData, setWeeklyPlayAllData] = useState<WeeklyPlayAllStats[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -60,6 +63,7 @@ export default function Home() {
         setDifferenceFromMedian(calculateDifferenceFromMedian(stats));
         setWeeklyRankings(calculateWeeklyRankings(stats));
         setPlayEveryoneData(calculatePlayEveryoneStats(stats));
+        setWeeklyPlayAllData(calculateWeeklyPlayAll(stats));
 
         setLoading(false);
       } catch (err) {
@@ -184,6 +188,9 @@ export default function Home() {
           <>
             <section>
               <PlayEveryoneAnalysis data={playEveryoneData} />
+            </section>
+            <section>
+              <WeeklyPlayAll data={weeklyPlayAllData} />
             </section>
           </>
         )}

@@ -91,3 +91,19 @@ export interface PlayEveryoneStats {
   playAllLosses: number;
   difference: number;
 }
+
+export interface WeeklyPlayAllRecord {
+  week: number;
+  wins: number;
+  losses: number;
+  winPct: number;
+}
+
+export interface WeeklyPlayAllStats {
+  username: string;
+  teamName: string;
+  weeklyRecords: WeeklyPlayAllRecord[];
+  totalWins: number;
+  totalLosses: number;
+  overallWinPct: number;
+}
