@@ -65,10 +65,10 @@ export default function WeeklyScores({ teams }: WeeklyScoresProps) {
                     </td>
                   );
                 })}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold bg-gray-50 text-gray-900">
                   {team.totalPoints.toFixed(2)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold bg-gray-50 text-gray-900">
                   {team.avgPoints.toFixed(2)}
                 </td>
               </tr>

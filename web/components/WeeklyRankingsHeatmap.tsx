@@ -90,10 +90,10 @@ export default function WeeklyRankingsHeatmap({ rankingsData, teams }: WeeklyRan
                       {ranking}
                     </td>
                   ))}
-                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-semibold bg-gray-50">
+                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-bold bg-gray-50 text-gray-900">
                     {team.avgRanking}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-semibold bg-gray-50">
+                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-bold bg-gray-50 text-gray-900">
                     {team.medRanking}
                   </td>
                 </tr>

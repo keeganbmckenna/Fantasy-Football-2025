@@ -15,6 +15,43 @@ interface PlayEveryoneAnalysisProps {
   data: PlayEveryoneData[];
 }
 
+interface BarChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    dataKey: string;
+    value: number;
+    color: string;
+    payload: {
+      name: string;
+    };
+  }>;
+}
+
+function BarChartTooltip({ active, payload }: BarChartTooltipProps) {
+  if (!active || !payload || !payload.length) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white border-2 border-gray-300 rounded-lg shadow-lg p-3">
+      <p className="font-bold text-gray-900 mb-2">{payload[0].payload.name}</p>
+      <div className="space-y-1">
+        {payload.map((entry) => (
+          <div key={entry.dataKey} className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-sm text-gray-700">
+              {entry.dataKey}: <span className="font-semibold">{entry.value}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function PlayEveryoneAnalysis({ data }: PlayEveryoneAnalysisProps) {
   // Sort by play-all wins
   const sortedData = [...data].sort((a, b) => b.playAllWins - a.playAllWins);
@@ -49,7 +86,7 @@ export default function PlayEveryoneAnalysis({ data }: PlayEveryoneAnalysisProps
               style={{ fontSize: '12px' }}
             />
             <YAxis label={{ value: 'Wins', angle: -90, position: 'insideLeft' }} />
-            <Tooltip />
+            <Tooltip content={<BarChartTooltip />} />
             <Legend />
             <Bar dataKey="Actual Wins" fill="#3b82f6" />
             <Bar dataKey="Play-All Wins" fill="#10b981" />
