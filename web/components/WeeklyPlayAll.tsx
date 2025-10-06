@@ -28,7 +28,7 @@ export default function WeeklyPlayAll({ data }: WeeklyPlayAllProps) {
       <div className="bg-gradient-to-r from-teal-600 to-teal-800 px-6 py-4">
         <h2 className="text-2xl font-bold text-white">Weekly Play-All Records</h2>
         <p className="text-teal-100 text-sm mt-1">
-          Each team's record if they played all other teams every week
+          {"Each team's record if they played all other teams every week"}
         </p>
       </div>
       <div className="overflow-x-auto">

@@ -28,7 +28,9 @@ export function calculateTeamStats(data: LeagueData): TeamStats[] {
       losses: roster.settings.losses,
       ties: roster.settings.ties,
       totalPoints: roster.settings.fpts + (roster.settings.fpts_decimal || 0) / 100,
-      pointsAgainst: roster.settings.fpts_against || 0 + (roster.settings.fpts_against_decimal || 0) / 100,
+      pointsAgainst:
+        (roster.settings.fpts_against || 0) +
+        ((roster.settings.fpts_against_decimal || 0) / 100),
       avgPoints: 0,
       weeklyScores: [],
       weeklyResults: [],
@@ -374,7 +376,6 @@ export function calculateWeeklyPlayAll(teams: TeamStats[]): Array<{
   overallWinPct: number;
 }> {
   const numWeeks = teams[0]?.weeklyScores.length || 0;
-  const numTeams = teams.length;
 
   const results = teams.map((team) => {
     const weeklyRecords = [];
