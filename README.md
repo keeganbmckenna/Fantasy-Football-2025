@@ -5,20 +5,22 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 ## Features
 
 ### Overview Tab
-- 📊 **League Standings** - Current standings with win/loss records, points for/against, and averages
+- 🏆 **Division Standings** - Division-by-division breakdown with team avatars, records, and games/points back from division leaders
+- 🎯 **Wild Card Race** - Comprehensive playoff picture showing IN/OUT status with visual playoff cutoff line
 - 🏈 **Weekly Matchups** - Expandable week-by-week matchup results with scores and winners
 
 ### Weekly Performance Tab
-- 📈 **Weekly Scores** - Visual bar chart showing all teams' scores each week
-- 🔥 **Weekly Rankings Heatmap** - Color-coded heatmap showing performance ranking each week
+- 📈 **Weekly Scores** - Complete table showing all weekly scores with win/loss color coding
+- 🔥 **Weekly Rankings Heatmap** - Color-coded heatmap showing performance ranking each week (1-12)
 
 ### Season Trends Tab
 - 📉 **Standings Over Time** - Track position changes throughout the season
 - 💯 **Cumulative Scores** - Total points accumulated over the season
-- 📊 **Difference from Median** - Shows how far above/below the median each team is performing
+- 📊 **Difference from Median** - Shows cumulative points above/below median with reference line
 
 ### Advanced Stats Tab
 - 🎲 **Play Everyone Analysis** - "What if every team played every other team each week?" comparison
+- 📋 **Weekly Play All** - Week-by-week theoretical records showing consistency and schedule impact
 
 ### Interactive Features
 - 🖱️ **Interactive Legend** - Hover over team names to highlight their line on charts
@@ -36,7 +38,7 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 │   │   ├── page.tsx          # Main page with tabs
 │   │   └── layout.tsx        # App layout
 │   ├── components/           # React components
-│   │   ├── Standings.tsx
+│   │   ├── PlayoffRace.tsx
 │   │   ├── WeeklyScores.tsx
 │   │   ├── WeeklyMatchups.tsx
 │   │   ├── StandingsOverTime.tsx
@@ -44,7 +46,9 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 │   │   ├── PointsVsMedian.tsx
 │   │   ├── WeeklyRankingsHeatmap.tsx
 │   │   ├── PlayEveryoneAnalysis.tsx
-│   │   └── CustomTooltip.tsx
+│   │   ├── WeeklyPlayAll.tsx
+│   │   ├── CustomTooltip.tsx
+│   │   └── ui/SectionCard.tsx
 │   └── lib/                  # Utilities and types
 │       ├── types.ts
 │       └── analyze.ts        # Data calculation functions
@@ -133,16 +137,18 @@ The app will automatically fetch live data from the Sleeper API on each page loa
 The app provides comprehensive analytics including:
 
 ### Basic Stats
-- **Current Standings** - Rankings with wins, losses, ties, points for/against
-- **Weekly Scores** - Points scored by each team each week
+- **Division Standings** - Division-by-division rankings with team avatars and records
+- **Wild Card Race** - Playoff positioning with IN/OUT status and cutoff visualization
+- **Weekly Scores** - Points scored by each team each week with win/loss color coding
 - **Matchup History** - Head-to-head results with winners highlighted
 
 ### Advanced Analytics
 - **Standings Progression** - How team rankings change week by week
-- **Cumulative Performance** - Running totals of points and wins
-- **Median Comparison** - Performance relative to league median
+- **Cumulative Performance** - Running totals of points over time
+- **Median Comparison** - Performance relative to league median with reference line
 - **Weekly Rankings** - Heatmap showing weekly performance ranks (1-12)
 - **Play Everyone Stats** - Hypothetical records if teams played all opponents each week
+- **Weekly Play All** - Week-by-week theoretical records showing consistency
 
 ### Visualization Features
 - All charts use interactive legends (hover to highlight)
