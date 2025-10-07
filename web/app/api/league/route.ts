@@ -1,43 +1,20 @@
 import { NextResponse } from 'next/server';
-
-const LEAGUE_ID = '1227033344391254016';
-const BASE_URL = 'https://api.sleeper.app/v1';
+import { SLEEPER_CONFIG } from '@/lib/config';
+import type { SleeperUser, SleeperRoster, SleeperMatchup } from '@/lib/types';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-interface SleeperUser {
-  user_id: string;
-  username: string;
-  display_name: string;
-}
-
-interface SleeperRoster {
-  roster_id: number;
-  owner_id: string;
-  players: string[];
-  settings: {
-    wins: number;
-    losses: number;
-    ties: number;
-    fpts: number;
-  };
-}
-
-interface SleeperMatchup {
-  roster_id: number;
-  matchup_id: number;
-  points: number;
-}
-
 export async function GET() {
   try {
+    const { leagueId, baseUrl, maxWeeks } = SLEEPER_CONFIG;
+
     // Fetch all data in parallel with no-cache headers
     const [leagueRes, usersRes, rostersRes] = await Promise.all([
-      fetch(`${BASE_URL}/league/${LEAGUE_ID}`, { cache: 'no-store' }),
-      fetch(`${BASE_URL}/league/${LEAGUE_ID}/users`, { cache: 'no-store' }),
-      fetch(`${BASE_URL}/league/${LEAGUE_ID}/rosters`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/league/${leagueId}`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/league/${leagueId}/users`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/league/${leagueId}/rosters`, { cache: 'no-store' }),
     ]);
 
     const league = await leagueRes.json();
@@ -49,9 +26,9 @@ export async function GET() {
 
     // Fetch matchups for all weeks with no-cache
     const matchupPromises = [];
-    for (let week = 1; week <= Math.min(currentWeek, 18); week++) {
+    for (let week = 1; week <= Math.min(currentWeek, maxWeeks); week++) {
       matchupPromises.push(
-        fetch(`${BASE_URL}/league/${LEAGUE_ID}/matchups/${week}`, { cache: 'no-store' }).then(res => res.json())
+        fetch(`${baseUrl}/league/${leagueId}/matchups/${week}`, { cache: 'no-store' }).then(res => res.json())
       );
     }
     const matchupsArray = await Promise.all(matchupPromises);

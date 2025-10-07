@@ -1,5 +1,25 @@
+/**
+ * Fantasy Football Analytics - Data Analysis Functions
+ *
+ * This module contains all calculation and data transformation logic
+ * for fantasy football league statistics and visualizations.
+ */
+
 import { LeagueData, TeamStats, WeekMatchup, SleeperMatchup } from './types';
 
+/**
+ * Retrieves the display name and username for a team by roster ID
+ *
+ * @param rosterId - The Sleeper roster ID
+ * @param data - Complete league data including user mappings
+ * @returns Object containing the team's display name and username
+ *
+ * @example
+ * ```ts
+ * const { name, username } = getTeamName(1, leagueData);
+ * // { name: "John's Team", username: "john123" }
+ * ```
+ */
 export function getTeamName(
   rosterId: number,
   data: LeagueData
@@ -15,6 +35,25 @@ export function getTeamName(
   return { name: `Team ${rosterId}`, username: `Team ${rosterId}` };
 }
 
+/**
+ * Calculates comprehensive statistics for all teams in the league
+ *
+ * Processes roster data and matchup results to generate:
+ * - Win/loss records
+ * - Total and average points
+ * - Points against
+ * - Weekly scores and results
+ * - League standings
+ *
+ * @param data - Complete league data from Sleeper API
+ * @returns Array of team statistics sorted by standings
+ *
+ * @example
+ * ```ts
+ * const teamStats = calculateTeamStats(leagueData);
+ * // Returns teams sorted by standing with full statistics
+ * ```
+ */
 export function calculateTeamStats(data: LeagueData): TeamStats[] {
   const stats: Record<number, TeamStats> = {};
 
@@ -99,6 +138,18 @@ export function calculateTeamStats(data: LeagueData): TeamStats[] {
   return teamStatsArray;
 }
 
+/**
+ * Organizes matchup data by week with team names and results
+ *
+ * @param data - Complete league data from Sleeper API
+ * @returns Object mapping week numbers to arrays of matchup details
+ *
+ * @example
+ * ```ts
+ * const matchups = getWeeklyMatchups(leagueData);
+ * const week1 = matchups[1]; // Array of matchups for week 1
+ * ```
+ */
 export function getWeeklyMatchups(data: LeagueData): Record<number, WeekMatchup[]> {
   const weeklyMatchups: Record<number, WeekMatchup[]> = {};
 
@@ -157,7 +208,12 @@ export function getWeeklyMatchups(data: LeagueData): Record<number, WeekMatchup[
   return weeklyMatchups;
 }
 
-// Calculate cumulative wins for each team over time
+/**
+ * Calculates cumulative win totals for each team over the season
+ *
+ * @param teams - Array of team statistics
+ * @returns Object mapping usernames to arrays of cumulative wins by week
+ */
 export function calculateCumulativeWins(teams: TeamStats[]): Record<string, number[]> {
   const cumulativeWins: Record<string, number[]> = {};
 
@@ -174,7 +230,12 @@ export function calculateCumulativeWins(teams: TeamStats[]): Record<string, numb
   return cumulativeWins;
 }
 
-// Calculate cumulative scores for each team over time
+/**
+ * Calculates cumulative point totals for each team over the season
+ *
+ * @param teams - Array of team statistics
+ * @returns Object mapping usernames to arrays of cumulative scores by week
+ */
 export function calculateCumulativeScores(teams: TeamStats[]): Record<string, number[]> {
   const cumulativeScores: Record<string, number[]> = {};
 
@@ -191,7 +252,15 @@ export function calculateCumulativeScores(teams: TeamStats[]): Record<string, nu
   return cumulativeScores;
 }
 
-// Calculate standings for each week
+/**
+ * Calculates historical standings position for each week
+ *
+ * Determines each team's standing (1st, 2nd, etc.) for every week of the season
+ * based on wins and total points at that point in time.
+ *
+ * @param teams - Array of team statistics
+ * @returns Object mapping usernames to arrays of standings by week
+ */
 export function calculateStandingsOverTime(teams: TeamStats[]): Record<string, number[]> {
   const standingsOverTime: Record<string, number[]> = {};
   const numWeeks = teams[0]?.weeklyScores.length || 0;
@@ -230,7 +299,15 @@ export function calculateStandingsOverTime(teams: TeamStats[]): Record<string, n
   return standingsOverTime;
 }
 
-// Calculate weekly rankings (1-12) based on points scored that week
+/**
+ * Calculates weekly performance rankings based on points scored
+ *
+ * Ranks teams 1-N for each week based solely on points scored that week
+ * (not cumulative standings).
+ *
+ * @param teams - Array of team statistics
+ * @returns Object mapping usernames to arrays of weekly rankings
+ */
 export function calculateWeeklyRankings(teams: TeamStats[]): Record<string, number[]> {
   const weeklyRankings: Record<string, number[]> = {};
   const numWeeks = teams[0]?.weeklyScores.length || 0;
@@ -263,7 +340,15 @@ export function calculateWeeklyRankings(teams: TeamStats[]): Record<string, numb
   return weeklyRankings;
 }
 
-// Calculate "play everyone" stats - what if each team played all other teams each week
+/**
+ * Calculates hypothetical "play everyone" statistics
+ *
+ * Determines how each team would perform if they played all other teams
+ * every week, comparing actual wins to hypothetical wins.
+ *
+ * @param teams - Array of team statistics
+ * @returns Array of play-everyone statistics sorted by difference
+ */
 export function calculatePlayEveryoneStats(teams: TeamStats[]): Array<{
   username: string;
   teamName: string;
@@ -319,7 +404,12 @@ export function calculatePlayEveryoneStats(teams: TeamStats[]): Array<{
   return results;
 }
 
-// Calculate median score for each week
+/**
+ * Calculates median score for each week of the season
+ *
+ * @param teams - Array of team statistics
+ * @returns Array of median scores, one per week
+ */
 export function calculateWeeklyMedians(teams: TeamStats[]): number[] {
   const numWeeks = teams[0]?.weeklyScores.length || 0;
   const medians: number[] = [];
@@ -341,7 +431,15 @@ export function calculateWeeklyMedians(teams: TeamStats[]): number[] {
   return medians;
 }
 
-// Calculate difference from cumulative median for each team
+/**
+ * Calculates cumulative difference from median for each team
+ *
+ * Shows how far above or below the cumulative median each team is performing
+ * at each point in the season. Positive values = above median.
+ *
+ * @param teams - Array of team statistics
+ * @returns Object mapping usernames to arrays of cumulative differences
+ */
 export function calculateDifferenceFromMedian(teams: TeamStats[]): Record<string, number[]> {
   const weeklyMedians = calculateWeeklyMedians(teams);
   const differences: Record<string, number[]> = {};
@@ -361,7 +459,15 @@ export function calculateDifferenceFromMedian(teams: TeamStats[]): Record<string
   return differences;
 }
 
-// Calculate weekly play-all stats - how each team would perform playing all others each week
+/**
+ * Calculates detailed weekly play-all statistics
+ *
+ * For each week, determines how each team would perform if they played
+ * all other teams, including win percentage and record.
+ *
+ * @param teams - Array of team statistics
+ * @returns Array of weekly play-all stats sorted by overall win percentage
+ */
 export function calculateWeeklyPlayAll(teams: TeamStats[]): Array<{
   username: string;
   teamName: string;

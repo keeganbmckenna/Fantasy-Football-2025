@@ -1,59 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TeamStats } from '@/lib/types';
+import { CHART_CONFIG } from '@/lib/constants';
+import { useChartHover } from '@/hooks/useChartHover';
+import { useTeamColors } from '@/hooks/useTeamColors';
 import CustomTooltip from './CustomTooltip';
+import SectionCard from './ui/SectionCard';
 
 interface PointsVsMedianProps {
   differenceData: Record<string, number[]>;
   teams: TeamStats[];
 }
 
-const COLORS = [
-  '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-  '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16',
-  '#06b6d4', '#a855f7'
-];
+const MEDIAN_COLOR = '#1f2937';
 
 export default function PointsVsMedian({ differenceData, teams }: PointsVsMedianProps) {
-  const [hoveredLine, setHoveredLine] = useState<string | null>(null);
-  const numWeeks = teams[0]?.weeklyScores.length || 0;
-  const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
+  const { setHoveredItem, clearHovered, isHovered, isOtherHovered } = useChartHover<string>();
+  const teamColors = useTeamColors(teams, Object.keys(differenceData));
 
-  // Transform data for recharts
-  const chartData = weeks.map((week, index) => {
-    const weekData: Record<string, string | number> = {
-      week: `W${week}`,
-      median: 0 // Median is always 0 in difference view
-    };
-    Object.keys(differenceData).forEach((username) => {
-      weekData[username] = differenceData[username][index];
+  // Transform data for recharts - memoized for performance
+  const chartData = useMemo(() => {
+    const numWeeks = teams[0]?.weeklyScores.length || 0;
+    const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
+
+    return weeks.map((week, index) => {
+      const weekData: Record<string, string | number> = {
+        week: `W${week}`,
+        median: 0, // Median is always 0 in difference view
+      };
+      Object.keys(differenceData).forEach((username) => {
+        weekData[username] = differenceData[username][index];
+      });
+      return weekData;
     });
-    return weekData;
-  });
+  }, [differenceData, teams]);
 
   // Prepare team data with colors for tooltip (including median)
-  const teamColors = [
-    { username: 'median', teamName: 'Median', color: '#1f2937' },
-    ...Object.keys(differenceData).map((username, index) => {
-      const team = teams.find(t => t.username === username);
-      return {
-        username,
-        teamName: team?.teamName || username,
-        color: COLORS[index % COLORS.length],
-      };
-    })
-  ];
+  const teamColorsWithMedian = useMemo(
+    () => [
+      { username: 'median', teamName: 'Median', color: MEDIAN_COLOR },
+      ...teamColors,
+    ],
+    [teamColors]
+  );
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-teal-600 to-teal-800 px-6 py-4">
-        <h2 className="text-2xl font-bold text-white">Difference from Median</h2>
-        <p className="text-teal-100 text-sm mt-1">Cumulative points above or below median (positive = above, negative = below)</p>
-      </div>
+    <SectionCard
+      title="Difference from Median"
+      subtitle="Cumulative points above or below median (positive = above, negative = below)"
+      gradientType="success"
+    >
       <div className="p-6">
-        <ResponsiveContainer width="100%" height={500}>
+        <ResponsiveContainer width="100%" height={CHART_CONFIG.defaultHeight}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="week" />
@@ -61,33 +61,32 @@ export default function PointsVsMedian({ differenceData, teams }: PointsVsMedian
             <Tooltip
               content={
                 <CustomTooltip
-                  teams={teamColors}
+                  teams={teamColorsWithMedian}
                   valueFormatter={(value) => `${value.toFixed(2)} pts`}
                 />
               }
               wrapperStyle={{ zIndex: 9999 }}
             />
             <Legend
-              onMouseEnter={(e) => setHoveredLine(e.dataKey as string)}
-              onMouseLeave={() => setHoveredLine(null)}
+              onMouseEnter={(e) => setHoveredItem(e.dataKey as string)}
+              onMouseLeave={clearHovered}
             />
             {/* Median line - bold and always visible */}
             <Line
               type="monotone"
               dataKey="median"
               name="Median"
-              stroke="#1f2937"
-              strokeWidth={hoveredLine === 'median' ? 5 : 3}
-              strokeOpacity={hoveredLine !== null && hoveredLine !== 'median' ? 0.4 : 1}
+              stroke={MEDIAN_COLOR}
+              strokeWidth={isHovered('median') ? CHART_CONFIG.strokeWidth.medianHovered : CHART_CONFIG.strokeWidth.median}
+              strokeOpacity={isOtherHovered('median') ? CHART_CONFIG.opacity.median : CHART_CONFIG.opacity.default}
               strokeDasharray="5 5"
               dot={false}
-              activeDot={{ r: 6 }}
+              activeDot={{ r: CHART_CONFIG.dotRadius.medianActive }}
             />
             {/* Team lines */}
             {Object.keys(differenceData).map((username, index) => {
-              const team = teams.find(t => t.username === username);
-              const isHovered = hoveredLine === username;
-              const isOtherHovered = hoveredLine !== null && hoveredLine !== username;
+              const team = teams.find((t) => t.username === username);
+              const color = teamColors[index]?.color;
 
               return (
                 <Line
@@ -95,17 +94,17 @@ export default function PointsVsMedian({ differenceData, teams }: PointsVsMedian
                   type="monotone"
                   dataKey={username}
                   name={team?.teamName || username}
-                  stroke={COLORS[index % COLORS.length]}
-                  strokeWidth={isHovered ? 4 : 2}
-                  strokeOpacity={isOtherHovered ? 0.2 : 1}
-                  dot={{ r: isHovered ? 5 : 3 }}
-                  activeDot={{ r: 5 }}
+                  stroke={color}
+                  strokeWidth={isHovered(username) ? CHART_CONFIG.strokeWidth.hovered : CHART_CONFIG.strokeWidth.default}
+                  strokeOpacity={isOtherHovered(username) ? CHART_CONFIG.opacity.dimmed : CHART_CONFIG.opacity.default}
+                  dot={{ r: isHovered(username) ? CHART_CONFIG.dotRadius.hovered : CHART_CONFIG.dotRadius.default }}
+                  activeDot={{ r: CHART_CONFIG.dotRadius.active }}
                 />
               );
             })}
           </LineChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </SectionCard>
   );
 }
