@@ -115,27 +115,15 @@ function DivisionCard({ division }: { division: DivisionStanding }) {
         </h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                Rank
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                Team
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                Record
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                Points
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                GB
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                PB
-              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-12">Rank</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-56">Team</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-20">Record</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Points</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-20">GB</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">PB</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
