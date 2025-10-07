@@ -621,14 +621,9 @@ export function calculateDivisionStandings(teams: TeamStats[]): DivisionStanding
       // Calculate games back from leader
       const winDiff = leader.wins - divTeams[i].wins;
       const lossDiff = divTeams[i].losses - leader.losses;
-      const gamesBack = (winDiff + lossDiff) / 2;
+      const gamesBack = -(winDiff + lossDiff) / 2;
 
-      // If tied in record, show points behind instead
-      if (gamesBack === 0 && leader.totalPoints > divTeams[i].totalPoints) {
-        divTeams[i].gamesBack = -(leader.totalPoints - divTeams[i].totalPoints);
-      } else {
-        divTeams[i].gamesBack = gamesBack;
-      }
+      divTeams[i].gamesBack = gamesBack;
     }
 
     divisions.push({
@@ -677,11 +672,9 @@ export function calculateWildCardStandings(
 
     // Games out from cutoff
     let gamesOut = 0;
-    if (!isIn && cutoffTeam) {
-      const winDiff = cutoffTeam.wins - team.wins;
-      const lossDiff = team.losses - cutoffTeam.losses;
-      gamesOut = (winDiff + lossDiff) / 2;
-    }
+    const winDiff = cutoffTeam.wins - team.wins;
+    const lossDiff = team.losses - cutoffTeam.losses;
+    gamesOut = -(winDiff + lossDiff) / 2;
 
     team.wildCardRank = rank;
     team.wildCardGamesOut = gamesOut;

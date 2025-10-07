@@ -12,7 +12,7 @@ interface TeamRowProps {
   team: TeamStats;
   rank: number;
   gamesBack?: number;
-  gamesOut?: number;
+  pointsBack?: number;
   isLeader?: boolean;
   showDivision?: boolean;
   isInPlayoffs?: boolean;
@@ -23,7 +23,7 @@ function TeamRow({
   team,
   rank,
   gamesBack,
-  gamesOut,
+  pointsBack,
   isLeader = false,
   showDivision = false,
   isInPlayoffs = false,
@@ -79,13 +79,20 @@ function TeamRow({
           </td>
         )}
         <td className="px-4 py-3 text-sm text-gray-900 font-semibold">
-          {gamesOut !== undefined && gamesOut > 0 ? gamesOut.toFixed(1) : ''}
-          {(gamesBack === 0 || gamesOut === 0 || isLeader) && '—'}
+          {gamesBack !== undefined && gamesBack > 0 ? '+' : ''}
+          {gamesBack !== undefined && gamesBack !== 0 ? Math.abs(gamesBack).toFixed(1) : ''}
+          {(gamesBack === 0) && '—'}
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-900 font-semibold">
+          {pointsBack !== undefined && pointsBack !== 0
+            ? (pointsBack > 0 ? `+${pointsBack.toFixed(2)}` : Math.abs(pointsBack).toFixed(2))
+            : ''}
+          {(pointsBack === 0) && '—'}
         </td>
       </tr>
       {showCutoffLine && (
         <tr>
-          <td colSpan={showDivision ? 6 : 5} className="px-0 py-0">
+          <td colSpan={showDivision ? 8 : 7} className="px-0 py-0">
             <div className="border-t-2 border-dashed border-red-500 relative">
               <span className="absolute -top-2.5 left-1/2 transform -translate-x-1/2 bg-white px-2 text-xs font-semibold text-red-500">
                 PLAYOFF CUTOFF
@@ -99,6 +106,7 @@ function TeamRow({
 }
 
 function DivisionCard({ division }: { division: DivisionStanding }) {
+  const leaderPoints = Math.max(...division.teams.map(t => t.totalPoints));
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="bg-gradient-to-r from-blue-500 to-blue-700 px-4 py-3">
@@ -125,6 +133,9 @@ function DivisionCard({ division }: { division: DivisionStanding }) {
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                 GB
               </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                PB
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -134,6 +145,7 @@ function DivisionCard({ division }: { division: DivisionStanding }) {
                 team={team}
                 rank={team.divisionRank || 0}
                 gamesBack={team.gamesBack}
+                pointsBack={team.totalPoints - leaderPoints}
                 isLeader={team.isDivisionLeader}
               />
             ))}
@@ -149,6 +161,7 @@ function WildCardCard({
 }: {
   wildCard: WildCardStanding[];
 }) {
+  const lastInPoints = wildCard.filter(wc => wc.isIn).slice(-1)[0]?.team.totalPoints || 0;
   return (
     <SectionCard
       title="Wild Card Race"
@@ -175,7 +188,10 @@ function WildCardCard({
                 Division
               </th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                Games Out
+                GB
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                PB
               </th>
             </tr>
           </thead>
@@ -189,7 +205,8 @@ function WildCardCard({
                   key={standing.team.username}
                   team={standing.team}
                   rank={standing.rank}
-                  gamesOut={standing.gamesOut}
+                  gamesBack={standing.gamesOut}
+                  pointsBack={standing.team.totalPoints - lastInPoints}
                   showDivision={true}
                   isInPlayoffs={standing.isIn}
                   showCutoffLine={isLastIn}
