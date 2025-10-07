@@ -3,17 +3,24 @@
 ## 🎉 All Features from Fantasy 2023.xlsx Now Implemented!
 
 ### 📊 **Tab 1: Overview**
-Current standings and weekly matchups at a glance.
+Playoff race breakdown and weekly matchups at a glance.
 
 #### Components:
-1. **Standings Table**
-   - Current rank (1-12)
-   - Team name and username
-   - Win-Loss record
-   - Points For
-   - Points Against
-   - Average Points per game
-   - Green highlight for playoff teams (top 6)
+1. **Playoff Race** 🏆
+   - **Division Standings**: Each division displayed separately
+     - Team avatars and full team names with usernames
+     - Win-Loss records and total points
+     - Games back (GB) and points back (PB) from division leader
+     - Division leaders highlighted with 🥇 and special styling
+     - Clean division-by-division breakdown
+   
+   - **Wild Card Race**: Comprehensive playoff picture 🎯
+     - All non-division leaders competing for remaining playoff spots
+     - Clear IN/OUT playoff status with green highlighting for playoff teams
+     - Games back and points back calculations relative to playoff cutoff
+     - Visual playoff cutoff line with "PLAYOFF CUTOFF" indicator
+     - Division tags showing which division each team belongs to
+     - Ranking system for wild card positioning
 
 2. **Weekly Matchups**
    - Interactive week selector
@@ -65,11 +72,11 @@ Interactive charts showing progression over the season.
    - Shows who's pulling ahead
    - Similar to "Cumulative Scores" sheet from Excel
 
-3. **Cumulative Wins Chart** 🏆
-   - Line chart showing win progression
-   - Visualizes win rate over time
-   - Identifies hot/cold streaks
-   - Similar to "Cumulative wins" sheet from Excel
+3. **Difference from Median** 📊
+   - Line chart showing cumulative points above/below median
+   - Median line as reference (dashed)
+   - Positive values = above median, negative = below median
+   - Shows which teams consistently outperform league average
 
 ---
 
@@ -90,6 +97,11 @@ Advanced analytics to measure luck vs. skill.
      - Play-all record (W-L)
      - Luck factor with color coding
    - Similar to "Play Everyone" sheet from Excel
+
+2. **Weekly Play All** 📋
+   - Week-by-week play-everyone records
+   - Shows theoretical wins if playing all teams each week
+   - Tracks consistency and strength of schedule impact
 
 ---
 
