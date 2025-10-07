@@ -115,11 +115,9 @@ To use with a different Sleeper league:
 
 1. Push your code to GitHub
 
-2. Connect your repository to [Vercel](https://vercel.com)
+2. Connect your repository to your hosting site.
 
-3. Set the root directory to `web`
-
-4. Deploy!
+3. Deploy!
 
 The app will automatically fetch live data from the Sleeper API on each page load.
 
