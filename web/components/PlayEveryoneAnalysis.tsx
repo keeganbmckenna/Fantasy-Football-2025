@@ -122,8 +122,8 @@ export default function PlayEveryoneAnalysis({ data }: PlayEveryoneAnalysisProps
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedData.map((team, index) => {
-              const isLucky = team.difference > 1;
-              const isUnlucky = team.difference < -1;
+              const isLucky = team.difference >= 1;
+              const isUnlucky = team.difference <= -1;
 
               // Calculate expected wins (play-all wins normalized to weekly basis)
               const numTeams = sortedData.length;
