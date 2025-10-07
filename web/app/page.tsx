@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Standings from '@/components/Standings';
+import PlayoffRace from '@/components/PlayoffRace';
 import WeeklyScores from '@/components/WeeklyScores';
 import WeeklyMatchups from '@/components/WeeklyMatchups';
 import StandingsOverTime from '@/components/StandingsOverTime';
@@ -10,7 +10,7 @@ import PointsVsMedian from '@/components/PointsVsMedian';
 import WeeklyRankingsHeatmap from '@/components/WeeklyRankingsHeatmap';
 import PlayEveryoneAnalysis from '@/components/PlayEveryoneAnalysis';
 import WeeklyPlayAll from '@/components/WeeklyPlayAll';
-import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats } from '@/lib/types';
+import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding } from '@/lib/types';
 import {
   calculateTeamStats,
   getWeeklyMatchups,
@@ -20,6 +20,8 @@ import {
   calculateWeeklyRankings,
   calculatePlayEveryoneStats,
   calculateWeeklyPlayAll,
+  calculateDivisionStandings,
+  calculateWildCardStandings,
 } from '@/lib/analyze';
 
 export default function Home() {
@@ -38,6 +40,8 @@ export default function Home() {
   const [weeklyRankings, setWeeklyRankings] = useState<Record<string, number[]>>({});
   const [playEveryoneData, setPlayEveryoneData] = useState<PlayEveryoneStats[]>([]);
   const [weeklyPlayAllData, setWeeklyPlayAllData] = useState<WeeklyPlayAllStats[]>([]);
+  const [divisions, setDivisions] = useState<DivisionStanding[]>([]);
+  const [wildCard, setWildCard] = useState<WildCardStanding[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -65,6 +69,14 @@ export default function Home() {
         setWeeklyRankings(calculateWeeklyRankings(stats));
         setPlayEveryoneData(calculatePlayEveryoneStats(stats));
         setWeeklyPlayAllData(calculateWeeklyPlayAll(stats));
+
+        // Calculate division standings and wild card race
+        const divisionStandings = calculateDivisionStandings(stats);
+        setDivisions(divisionStandings);
+
+        const playoffSpots = data.league?.settings?.playoff_teams || 6;
+        const wildCardStandings = calculateWildCardStandings(stats, playoffSpots);
+        setWildCard(wildCardStandings);
 
         setLoading(false);
       } catch (err) {
@@ -194,7 +206,10 @@ export default function Home() {
         {activeTab === 'overview' && (
           <>
             <section>
-              <Standings teams={teamStats} />
+              <PlayoffRace
+                divisions={divisions}
+                wildCard={wildCard}
+              />
             </section>
             <section>
               <WeeklyMatchups matchups={matchups} />

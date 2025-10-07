@@ -51,6 +51,14 @@ export async function GET() {
       matchupsByWeek[index + 1] = matchups;
     });
 
+    // Build division names from league metadata
+    const divisionNames: Record<number, string> = {};
+    if (league.metadata) {
+      if (league.metadata.division_1) divisionNames[1] = league.metadata.division_1;
+      if (league.metadata.division_2) divisionNames[2] = league.metadata.division_2;
+      if (league.metadata.division_3) divisionNames[3] = league.metadata.division_3;
+    }
+
     return NextResponse.json(
       {
         league,
@@ -60,6 +68,7 @@ export async function GET() {
         userMap,
         rosterToUserMap,
         lastScoredWeek: league.settings?.last_scored_leg || currentWeek,
+        divisionNames,
       },
       {
         headers: {

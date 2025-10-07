@@ -3,6 +3,10 @@ export interface SleeperUser {
   username: string;
   display_name: string;
   avatar?: string;
+  metadata?: {
+    avatar?: string;
+    team_name?: string;
+  };
 }
 
 export interface SleeperRoster {
@@ -17,6 +21,7 @@ export interface SleeperRoster {
     fpts_decimal?: number;
     fpts_against?: number;
     fpts_against_decimal?: number;
+    division?: number;
   };
 }
 
@@ -34,9 +39,17 @@ export interface SleeperLeague {
   name: string;
   season: string;
   status: string;
+  avatar?: string;
+  metadata?: {
+    division_1?: string;
+    division_2?: string;
+    division_3?: string;
+  };
   settings?: {
     leg?: number;
     last_scored_leg?: number;
+    divisions?: number;
+    playoff_teams?: number;
   };
 }
 
@@ -48,6 +61,7 @@ export interface LeagueData {
   userMap: Record<string, SleeperUser>;
   rosterToUserMap: Record<number, string>;
   lastScoredWeek: number;
+  divisionNames?: Record<number, string>;
 }
 
 export interface TeamStats {
@@ -63,6 +77,14 @@ export interface TeamStats {
   weeklyResults: ('W' | 'L' | 'T')[];
   standing: number;
   standingValue: number;
+  division?: number;
+  divisionName?: string;
+  divisionRank?: number;
+  isDivisionLeader?: boolean;
+  avatarUrl?: string | null;
+  gamesBack?: number;
+  wildCardRank?: number;
+  wildCardGamesOut?: number;
 }
 
 export interface WeekMatchup {
@@ -107,4 +129,18 @@ export interface WeeklyPlayAllStats {
   totalWins: number;
   totalLosses: number;
   overallWinPct: number;
+}
+
+export interface DivisionStanding {
+  division: number;
+  divisionName: string;
+  teams: TeamStats[];
+  leader: TeamStats;
+}
+
+export interface WildCardStanding {
+  team: TeamStats;
+  rank: number;
+  gamesOut: number;
+  isIn: boolean;
 }

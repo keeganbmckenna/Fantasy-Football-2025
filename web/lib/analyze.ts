@@ -5,7 +5,42 @@
  * for fantasy football league statistics and visualizations.
  */
 
-import { LeagueData, TeamStats, WeekMatchup, SleeperMatchup } from './types';
+import { LeagueData, TeamStats, WeekMatchup, SleeperMatchup, SleeperUser, DivisionStanding, WildCardStanding } from './types';
+
+/**
+ * Gets the best avatar URL for a user
+ * Prioritizes metadata.avatar (full URL) over avatar ID
+ *
+ * @param user - Sleeper user object
+ * @returns Avatar URL or null if no avatar available
+ */
+export function getAvatarUrl(user: SleeperUser | undefined): string | null {
+  if (!user) return null;
+
+  // Prefer full URL from metadata
+  if (user.metadata?.avatar) {
+    return user.metadata.avatar;
+  }
+
+  // Fall back to avatar ID
+  if (user.avatar) {
+    return `https://sleepercdn.com/avatars/thumbs/${user.avatar}`;
+  }
+
+  return null;
+}
+
+/**
+ * Gets custom team name from metadata or falls back to display name
+ *
+ * @param user - Sleeper user object
+ * @param fallback - Fallback name if no custom name found
+ * @returns Custom team name or fallback
+ */
+export function getCustomTeamName(user: SleeperUser | undefined, fallback: string): string {
+  if (!user) return fallback;
+  return user.metadata?.team_name || user.display_name || fallback;
+}
 
 /**
  * Retrieves the display name and username for a team by roster ID
@@ -28,8 +63,8 @@ export function getTeamName(
   if (userId) {
     const user = data.userMap[userId];
     return {
-      name: user?.display_name || user?.username || `Team ${rosterId}`,
-      username: user?.username || `Team ${rosterId}`,
+      name: user?.display_name || `Team ${rosterId}`,
+      username: user?.display_name || `Team ${rosterId}`,
     };
   }
   return { name: `Team ${rosterId}`, username: `Team ${rosterId}` };
@@ -60,8 +95,12 @@ export function calculateTeamStats(data: LeagueData): TeamStats[] {
   // Initialize stats from rosters
   data.rosters.forEach((roster) => {
     const { name, username } = getTeamName(roster.roster_id, data);
+    const user = data.userMap[roster.owner_id];
+    const customName = getCustomTeamName(user, name);
+
+    const division = roster.settings.division;
     stats[roster.roster_id] = {
-      teamName: name,
+      teamName: customName,
       username,
       wins: roster.settings.wins,
       losses: roster.settings.losses,
@@ -75,6 +114,9 @@ export function calculateTeamStats(data: LeagueData): TeamStats[] {
       weeklyResults: [],
       standing: 0,
       standingValue: 0,
+      division,
+      divisionName: data.divisionNames?.[division || 0],
+      avatarUrl: getAvatarUrl(user),
     };
   });
 
@@ -535,4 +577,120 @@ export function calculateWeeklyPlayAll(teams: TeamStats[]): Array<{
 
   // Sort by overall win percentage (descending)
   return results.sort((a, b) => b.overallWinPct - a.overallWinPct);
+}
+
+/**
+ * Calculates division standings with leaders and games back
+ *
+ * Groups teams by division, identifies division leaders, and calculates
+ * games behind the division leader for each team.
+ *
+ * @param teams - Array of team statistics
+ * @returns Array of division standings sorted by division number
+ */
+export function calculateDivisionStandings(teams: TeamStats[]): DivisionStanding[] {
+  const divisionMap: Record<number, TeamStats[]> = {};
+
+  // Group teams by division
+  teams.forEach((team) => {
+    const div = team.division || 0;
+    if (!divisionMap[div]) divisionMap[div] = [];
+    divisionMap[div].push(team);
+  });
+
+  // Process each division
+  const divisions: DivisionStanding[] = [];
+
+  Object.keys(divisionMap).forEach((divKey) => {
+    const div = parseInt(divKey);
+    const divTeams = divisionMap[div];
+
+    // Sort by standing value (same as overall standings)
+    divTeams.sort((a, b) => b.standingValue - a.standingValue);
+
+    // Assign division ranks and games back
+    const leader = divTeams[0];
+    leader.isDivisionLeader = true;
+    leader.divisionRank = 1;
+    leader.gamesBack = 0;
+
+    for (let i = 1; i < divTeams.length; i++) {
+      divTeams[i].divisionRank = i + 1;
+      divTeams[i].isDivisionLeader = false;
+
+      // Calculate games back from leader
+      const winDiff = leader.wins - divTeams[i].wins;
+      const lossDiff = divTeams[i].losses - leader.losses;
+      const gamesBack = (winDiff + lossDiff) / 2;
+
+      // If tied in record, show points behind instead
+      if (gamesBack === 0 && leader.totalPoints > divTeams[i].totalPoints) {
+        divTeams[i].gamesBack = -(leader.totalPoints - divTeams[i].totalPoints);
+      } else {
+        divTeams[i].gamesBack = gamesBack;
+      }
+    }
+
+    divisions.push({
+      division: div,
+      divisionName: leader.divisionName || `Division ${div}`,
+      teams: divTeams,
+      leader,
+    });
+  });
+
+  // Sort divisions by division number
+  return divisions.sort((a, b) => a.division - b.division);
+}
+
+/**
+ * Calculates wild card standings (non-division leaders)
+ *
+ * Determines which non-division leaders would make the playoffs
+ * and how far teams are from the playoff cutoff.
+ *
+ * @param teams - Array of team statistics
+ * @param playoffSpots - Total number of playoff spots (default: 6)
+ * @returns Array of wild card standings sorted by standing value
+ */
+export function calculateWildCardStandings(
+  teams: TeamStats[],
+  playoffSpots: number = 6
+): WildCardStanding[] {
+  // Get division leaders
+  const divisionLeaders = teams.filter((t) => t.isDivisionLeader);
+  const numDivisionLeaders = divisionLeaders.length;
+  const wildCardSpots = playoffSpots - numDivisionLeaders;
+
+  // Get non-division leaders sorted by standing
+  const wildCardTeams = teams
+    .filter((t) => !t.isDivisionLeader)
+    .sort((a, b) => b.standingValue - a.standingValue);
+
+  // Find the wildcard cutoff team (last team in)
+  const cutoffTeam = wildCardTeams[wildCardSpots - 1];
+
+  // Calculate wild card standings
+  return wildCardTeams.map((team, index) => {
+    const rank = index + 1;
+    const isIn = rank <= wildCardSpots;
+
+    // Games out from cutoff
+    let gamesOut = 0;
+    if (!isIn && cutoffTeam) {
+      const winDiff = cutoffTeam.wins - team.wins;
+      const lossDiff = team.losses - cutoffTeam.losses;
+      gamesOut = (winDiff + lossDiff) / 2;
+    }
+
+    team.wildCardRank = rank;
+    team.wildCardGamesOut = gamesOut;
+
+    return {
+      team,
+      rank,
+      gamesOut,
+      isIn,
+    };
+  });
 }
