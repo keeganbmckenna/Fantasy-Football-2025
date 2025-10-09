@@ -1,6 +1,6 @@
 # Fantasy Football 2025 - Complete Feature List
 
-## 🎉 All Features from Fantasy 2023.xlsx Now Implemented!
+## 🎉 Comprehensive Fantasy Football Analytics Platform
 
 ### 📊 **Tab 1: Overview**
 Playoff race breakdown and weekly matchups at a glance.
@@ -30,6 +30,33 @@ Playoff race breakdown and weekly matchups at a glance.
 
 ---
 
+### 🔄 **Tab 5: Transactions**
+Complete transaction history and analysis.
+
+#### Components:
+1. **Transaction Timeline**
+   - Chronological list of all league transactions
+   - Filter options: All / Trades / Adds-Drops
+   - Player name resolution with team/position info
+   - FAAB spending display for waiver claims
+   - Accurate timestamps (when transactions processed, not submitted)
+
+2. **Transaction Types**
+   - **Trades**: Expandable details showing both sides
+     - What each team gave up
+     - What each team received
+     - Draft picks and FAAB in trades
+   - **Swaps**: Combined add+drop displayed as single transaction
+   - **Adds**: Waiver claims and free agent pickups
+   - **Drops**: Player releases
+
+3. **Smart Caching**
+   - Player data cached for 24 hours (17.8MB dataset)
+   - CDN caching for optimal performance
+   - Transaction data cached for 30 minutes
+
+---
+
 ### 📈 **Tab 2: Weekly Performance**
 Detailed week-by-week performance breakdown.
 
@@ -41,7 +68,6 @@ Detailed week-by-week performance breakdown.
      - Red = Loss
      - Yellow = Tie
    - Season totals and averages
-   - Similar to "Raw Scores" & "Scores" sheets from Excel
 
 2. **Weekly Rankings Heatmap** 🔥
    - Visual heatmap showing ranking (1-12) each week
@@ -51,7 +77,6 @@ Detailed week-by-week performance breakdown.
      - Yellow = Bottom 50%
      - Red = Bottom 25%
    - Average and median ranking columns
-   - Similar to "Rankings" sheet from Excel
 
 ---
 
@@ -64,13 +89,11 @@ Interactive charts showing progression over the season.
    - Y-axis: Standing (1-12, inverted)
    - X-axis: Weeks
    - See who's rising/falling throughout season
-   - Similar to "Standings over time" sheet from Excel
 
 2. **Cumulative Scores Chart** 📈
    - Line chart showing total points accumulation
    - Tracks scoring consistency and momentum
    - Shows who's pulling ahead
-   - Similar to "Cumulative Scores" sheet from Excel
 
 3. **Difference from Median** 📊
    - Line chart showing cumulative points above/below median
@@ -96,7 +119,6 @@ Advanced analytics to measure luck vs. skill.
      - Play-all wins (total)
      - Play-all record (W-L)
      - Luck factor with color coding
-   - Similar to "Play Everyone" sheet from Excel
 
 2. **Weekly Play All** 📋
    - Week-by-week play-everyone records
@@ -105,36 +127,17 @@ Advanced analytics to measure luck vs. skill.
 
 ---
 
-## 🆕 Features Beyond the Excel File
+## 🆕 Modern Platform Features
 
-### Modern Enhancements:
+### Interactive Enhancements:
 - **Interactive Charts** - Recharts library for beautiful visualizations
-- **Tabbed Navigation** - Clean organization vs 13 separate sheets
-- **Live Data** - Real-time API fetching from Sleeper
+- **Tabbed Navigation** - Clean organization across 5 main tabs
+- **Live Data** - Real-time API fetching from Sleeper with smart caching
 - **Responsive Design** - Works on mobile, tablet, and desktop
 - **Color Coding** - Visual indicators throughout
 - **Hover Tooltips** - Interactive chart tooltips
 - **Smooth Transitions** - Modern UI animations
-
----
-
-## 📋 Excel Sheet Mapping
-
-| Excel Sheet | Website Location |
-|------------|------------------|
-| Raw Scores | Tab 2: Weekly Scores Table |
-| Raw Records | Integrated into Weekly Scores (W/L colors) |
-| Scores | Tab 1: Standings + Tab 2: Weekly Scores |
-| Scores + Wins | Tab 2: Weekly Scores (with W/L indicators) |
-| Rankings | Tab 2: Weekly Rankings Heatmap |
-| Standings | Tab 1: Standings Table |
-| Rankings + Wins | Tab 2: Weekly Rankings Heatmap |
-| Play Everyone | Tab 4: Play Everyone Analysis |
-| Cumulative wins | Tab 3: Cumulative Wins Chart |
-| Cumulative Scores | Tab 3: Cumulative Scores Chart |
-| Standings over time | Tab 3: Standings Over Time Chart |
-| Cumulative Score Value | Calculated in standings algorithm |
-| Difference from Cumulative Score | Reflected in standings rankings |
+- **Team Highlighting** - Hover over team names to highlight across all charts
 
 ---
 
@@ -145,6 +148,8 @@ Advanced analytics to measure luck vs. skill.
 - Total Points For/Against
 - Average Points per Game
 - Standing Value (wins + points decimal)
+- Games Back from Division Leader
+- Points Back from Division Leader
 
 ### Advanced Stats:
 - Weekly Rankings (1-12 each week)
@@ -155,6 +160,14 @@ Advanced analytics to measure luck vs. skill.
 - Standings Progression
 - Play-All-Teams Record
 - Luck Factor
+- Division Leadership Status
+- Wild Card Playoff Positioning
+
+### Transaction Stats:
+- Total Transactions per Team
+- Adds, Drops, Trades count
+- FAAB Spending tracking
+- Transaction timing and history
 
 ---
 
@@ -187,16 +200,10 @@ All charts and tables are:
 
 ---
 
-## 🔄 Live Updates
+## 🔄 Data & Performance
 
-The site fetches fresh data from Sleeper API on every page load, ensuring:
+The platform uses smart caching strategies for optimal performance while ensuring data freshness:
+- Up-to-date league standings and scores
 - Current week matchups
-- Latest scores
-- Up-to-date standings
-- Real-time league information
-
----
-
-## 🏆 Mission Accomplished!
-
-All features from Fantasy 2023.xlsx have been successfully recreated with modern, interactive visualizations! The site now provides everything in the Excel file plus interactive charts and real-time data.
+- Recent transaction activity
+- Fast page loads across all devices

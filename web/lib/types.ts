@@ -144,3 +144,103 @@ export interface WildCardStanding {
   gamesOut: number;
   isIn: boolean;
 }
+
+// Transaction Types
+export interface SleeperTransaction {
+  type: 'trade' | 'waiver' | 'free_agent';
+  transaction_id: string;
+  status: string;
+  settings: {
+    waiver_bid?: number;
+  } | null;
+  roster_ids: number[];
+  metadata?: {
+    notes?: string;
+  };
+  adds: Record<string, number> | null;
+  drops: Record<string, number> | null;
+  draft_picks?: Array<{
+    season: string;
+    round: number;
+    roster_id: number;
+    previous_owner_id: number;
+    owner_id: number;
+  }>;
+  waiver_budget?: Array<{
+    sender: number;
+    receiver: number;
+    amount: number;
+  }>;
+  created: number;
+  status_updated: number;
+  creator: string;
+  consenter_ids: number[];
+}
+
+export interface ProcessedTransaction {
+  id: string;
+  type: 'add' | 'drop' | 'trade' | 'swap';
+  week: number;
+  timestamp: number;
+  teamName: string;
+  username: string;
+  rosterId: number;
+  playerId?: string;
+  playerName?: string;
+  waiverBid?: number;
+  // For swap type (combined add+drop)
+  droppedPlayerId?: string;
+  droppedPlayerName?: string;
+  // For trade type
+  tradePartner?: string;
+  tradePartnerTeamName?: string;
+  tradeDetails?: {
+    team1: {
+      username: string;
+      teamName: string;
+      gives: string[];
+      receives: string[];
+    };
+    team2: {
+      username: string;
+      teamName: string;
+      gives: string[];
+      receives: string[];
+    };
+  };
+}
+
+export interface TransactionStats {
+  username: string;
+  teamName: string;
+  rosterId: number;
+  totalTransactions: number;
+  adds: number;
+  drops: number;
+  trades: number;
+  totalWaiverSpent: number;
+  bestPickup?: {
+    playerName: string;
+    week: number;
+  };
+}
+
+export interface TradeInfo {
+  id: string;
+  week: number;
+  timestamp: number;
+  team1: {
+    username: string;
+    teamName: string;
+    rosterId: number;
+    gives: string[];
+    receives: string[];
+  };
+  team2: {
+    username: string;
+    teamName: string;
+    rosterId: number;
+    gives: string[];
+    receives: string[];
+  };
+}

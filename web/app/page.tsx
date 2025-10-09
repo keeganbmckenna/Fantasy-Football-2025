@@ -10,7 +10,8 @@ import PointsVsMedian from '@/components/PointsVsMedian';
 import WeeklyRankingsHeatmap from '@/components/WeeklyRankingsHeatmap';
 import PlayEveryoneAnalysis from '@/components/PlayEveryoneAnalysis';
 import WeeklyPlayAll from '@/components/WeeklyPlayAll';
-import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding } from '@/lib/types';
+import AllTransactions from '@/components/AllTransactions';
+import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding, SleeperTransaction, ProcessedTransaction } from '@/lib/types';
 import {
   calculateTeamStats,
   getWeeklyMatchups,
@@ -23,6 +24,11 @@ import {
   calculateDivisionStandings,
   calculateWildCardStandings,
 } from '@/lib/analyze';
+import {
+  processTransactions,
+  extractTrades,
+  tradesToProcessedTransactions,
+} from '@/lib/transactionAnalyze';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -42,6 +48,9 @@ export default function Home() {
   const [weeklyPlayAllData, setWeeklyPlayAllData] = useState<WeeklyPlayAllStats[]>([]);
   const [divisions, setDivisions] = useState<DivisionStanding[]>([]);
   const [wildCard, setWildCard] = useState<WildCardStanding[]>([]);
+
+  // Transaction data
+  const [allTransactions, setAllTransactions] = useState<ProcessedTransaction[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -77,6 +86,41 @@ export default function Home() {
         const playoffSpots = data.league?.settings?.playoff_teams || 6;
         const wildCardStandings = calculateWildCardStandings(stats, playoffSpots);
         setWildCard(wildCardStandings);
+
+        // Fetch player data and transaction data in parallel
+        const [transactionRes, playerRes] = await Promise.all([
+          fetch('/api/transactions'),
+          fetch('/api/players')
+        ]);
+
+        let playerNames: Record<string, string> = {};
+        if (playerRes.ok) {
+          const playerData = await playerRes.json();
+          playerNames = playerData.players || {};
+        }
+
+        if (transactionRes.ok) {
+          const transactionData: { transactions: Array<SleeperTransaction & { week: number }> } = await transactionRes.json();
+
+          // Process transactions with player names (includes adds, drops, swaps)
+          const processedTransactions = processTransactions(
+            transactionData.transactions,
+            data,
+            playerNames
+          );
+
+          // Extract trades with player names, convert to ProcessedTransaction format
+          const tradeData = extractTrades(
+            transactionData.transactions,
+            data,
+            playerNames
+          );
+          const processedTrades = tradesToProcessedTransactions(tradeData);
+
+          // Combine all transactions and sort by timestamp
+          const combined = [...processedTransactions, ...processedTrades].sort((a, b) => b.timestamp - a.timestamp);
+          setAllTransactions(combined);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -115,6 +159,7 @@ export default function Home() {
     { id: 'weekly', name: 'Weekly Performance', icon: '📈' },
     { id: 'trends', name: 'Season Trends', icon: '📉' },
     { id: 'advanced', name: 'Advanced Stats', icon: '🔬' },
+    { id: 'transactions', name: 'Transactions', icon: '🔄' },
   ];
 
   return (
@@ -254,6 +299,13 @@ export default function Home() {
               <WeeklyPlayAll data={weeklyPlayAllData} />
             </section>
           </>
+        )}
+
+        {/* Transactions Tab */}
+        {activeTab === 'transactions' && (
+          <section>
+            <AllTransactions transactions={allTransactions} />
+          </section>
         )}
       </main>
 

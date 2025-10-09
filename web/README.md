@@ -41,18 +41,22 @@ npm start
 ```
 web/
 ├── app/                      # Next.js App Router
-│   ├── api/league/          # API route for Sleeper data
+│   ├── api/
+│   │   ├── league/          # League data and weekly matchups
+│   │   ├── players/         # Player name resolution with caching
+│   │   └── transactions/    # Transaction history data
 │   ├── page.tsx             # Main dashboard page
 │   ├── layout.tsx           # Root layout with metadata
 │   └── globals.css          # Global styles
 ├── components/              # React components
 │   ├── ui/                  # Shared UI components
 │   │   └── SectionCard.tsx  # Reusable card component
+│   ├── AllTransactions.tsx  # Transaction timeline with filtering
 │   ├── CumulativeScores.tsx
 │   ├── CustomTooltip.tsx
 │   ├── PlayEveryoneAnalysis.tsx
+│   ├── PlayoffRace.tsx      # Division standings & wild card
 │   ├── PointsVsMedian.tsx
-│   ├── Standings.tsx
 │   ├── StandingsOverTime.tsx
 │   ├── WeeklyMatchups.tsx
 │   ├── WeeklyPlayAll.tsx
@@ -62,7 +66,8 @@ web/
 │   ├── useChartHover.ts     # Chart interaction state
 │   └── useTeamColors.ts     # Team color mapping
 ├── lib/                     # Utilities and configuration
-│   ├── analyze.ts           # Data calculation functions
+│   ├── analyze.ts           # Statistical calculations
+│   ├── transactionAnalyze.ts # Transaction processing
 │   ├── constants.ts         # Shared constants (colors, config)
 │   ├── config.ts            # App configuration
 │   └── types.ts             # TypeScript type definitions
@@ -85,17 +90,39 @@ Get your league ID from your Sleeper league URL:
 
 ## Features
 
-- **Real-time Data**: Fetches live data from Sleeper API on each page load
-- **Interactive Charts**: Hover over team names to highlight their performance
+- **Real-time Data**: Fetches live data from Sleeper API with smart caching
+- **Interactive Charts**: Hover over team names to highlight their performance across all visualizations
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
-- **No Caching**: Always shows the most up-to-date league information
+- **Smart Caching**: CDN and in-memory caching for optimal performance without stale data
 
 ### Analytics Tabs
 
-1. **Overview** - League standings and weekly matchups
-2. **Weekly Performance** - Weekly scores and rankings heatmap
-3. **Season Trends** - Standings progression and cumulative statistics
-4. **Advanced Stats** - Play-everyone analysis and win percentage
+1. **Overview**
+   - Division standings with leader indicators
+   - Wild card playoff race tracking
+   - Weekly head-to-head matchups
+
+2. **Weekly Performance**
+   - Weekly scoring charts for all teams
+   - Rankings heatmap showing performance trends
+
+3. **Season Trends**
+   - Standings progression over time
+   - Cumulative scoring charts
+   - Points vs. median performance
+
+4. **Advanced Stats**
+   - Play-everyone record (record if you played all teams each week)
+   - Weekly play-all win percentages
+   - Luck analysis
+
+5. **Transactions**
+   - Complete transaction timeline
+   - Filter by: All, Trades, or Adds/Drops
+   - Player name resolution
+   - FAAB spending tracking
+   - Combined add+drop display as swaps
+   - Expandable trade details showing both sides
 
 ## Tech Stack
 
@@ -103,7 +130,7 @@ Get your league ID from your Sleeper league URL:
 - **TypeScript** - Type-safe development
 - **Tailwind CSS 4** - Utility-first styling
 - **Recharts** - Interactive data visualizations
-- **Sleeper API** - Fantasy football data source
+- **Sleeper API** - Fantasy football data source with smart caching
 
 ## Development
 

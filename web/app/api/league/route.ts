@@ -2,19 +2,15 @@ import { NextResponse } from 'next/server';
 import { SLEEPER_CONFIG } from '@/lib/config';
 import type { SleeperUser, SleeperRoster, SleeperMatchup } from '@/lib/types';
 
-// Disable caching for this route
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export async function GET() {
   try {
     const { leagueId, baseUrl, maxWeeks } = SLEEPER_CONFIG;
 
-    // Fetch all data in parallel with no-cache headers
+    // Fetch all data in parallel with 5 minute cache
     const [leagueRes, usersRes, rostersRes] = await Promise.all([
-      fetch(`${baseUrl}/league/${leagueId}`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/league/${leagueId}/users`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/league/${leagueId}/rosters`, { cache: 'no-store' }),
+      fetch(`${baseUrl}/league/${leagueId}`, { next: { revalidate: 300 } }),
+      fetch(`${baseUrl}/league/${leagueId}/users`, { next: { revalidate: 300 } }),
+      fetch(`${baseUrl}/league/${leagueId}/rosters`, { next: { revalidate: 300 } }),
     ]);
 
     const league = await leagueRes.json();
@@ -24,11 +20,11 @@ export async function GET() {
     // Get current week or default to 14
     const currentWeek = league.settings?.leg || 14;
 
-    // Fetch matchups for all weeks with no-cache
+    // Fetch matchups for all weeks
     const matchupPromises = [];
     for (let week = 1; week <= Math.min(currentWeek, maxWeeks); week++) {
       matchupPromises.push(
-        fetch(`${baseUrl}/league/${leagueId}/matchups/${week}`, { cache: 'no-store' }).then(res => res.json())
+        fetch(`${baseUrl}/league/${leagueId}/matchups/${week}`).then(res => res.json())
       );
     }
     const matchupsArray = await Promise.all(matchupPromises);
@@ -59,25 +55,16 @@ export async function GET() {
       if (league.metadata.division_3) divisionNames[3] = league.metadata.division_3;
     }
 
-    return NextResponse.json(
-      {
-        league,
-        users,
-        rosters,
-        matchups: matchupsByWeek,
-        userMap,
-        rosterToUserMap,
-        lastScoredWeek: league.settings?.last_scored_leg || currentWeek,
-        divisionNames,
-      },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-      }
-    );
+    return NextResponse.json({
+      league,
+      users,
+      rosters,
+      matchups: matchupsByWeek,
+      userMap,
+      rosterToUserMap,
+      lastScoredWeek: league.settings?.last_scored_leg || currentWeek,
+      divisionNames,
+    });
   } catch (error) {
     console.error('Error fetching league data:', error);
     return NextResponse.json(

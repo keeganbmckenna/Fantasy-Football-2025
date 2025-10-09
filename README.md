@@ -25,7 +25,6 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 ### Interactive Features
 - 🖱️ **Interactive Legend** - Hover over team names to highlight their line on charts
 - 🎯 **Custom Tooltips** - Sorted, scrollable tooltips showing all teams ranked by performance
-- 🔄 **No Caching** - Always fetches fresh data from Sleeper API
 - 📱 **Responsive Design** - Works on desktop and mobile devices
 
 ## Project Structure
@@ -156,10 +155,9 @@ The app provides comprehensive analytics including:
 
 ## Development Notes
 
-- API route (`/api/league`) is configured with `no-cache` to ensure fresh data
-- All fetch requests use `cache: 'no-store'` for real-time updates
 - Charts use state management for interactive hover effects
 - Custom tooltip component handles overflow and scrolling for 12+ teams
+- Data is fetched from Sleeper API with smart caching
 
 ## License
 
