@@ -48,7 +48,6 @@ export async function getHistoricalValues(
       return cached.data as HistoricalValue[];
     }
     // If cached data is empty, fall through to fetch fresh data
-    console.log(`Cache hit for ${playerId} but data is empty, retrying...`);
   }
 
   try {
@@ -247,7 +246,6 @@ export async function getFantasyCalcId(
   // Try exact match
   for (const player of players) {
     if (normalizePlayerName(player.player.name) === normalizedSearch) {
-      console.log(`Exact name match: "${cleanName}" → "${player.player.name}" (FC ID: ${player.player.id})`);
       return String(player.player.id);
     }
   }
@@ -262,7 +260,6 @@ export async function getFantasyCalcId(
         normalizedPlayerName.includes(normalizedSearch) ||
         normalizedSearch.includes(normalizedPlayerName)
       ) {
-        console.log(`Fuzzy name match: "${cleanName}" → "${player.player.name}" (FC ID: ${player.player.id})`);
         return String(player.player.id);
       }
     }
@@ -277,7 +274,6 @@ export async function getFantasyCalcId(
  */
 export function clearCache(): void {
   cache.clear();
-  console.log('✅ All cache cleared');
 }
 
 /**
@@ -285,22 +281,12 @@ export function clearCache(): void {
  */
 export function clearPlayerCache(playerId: string): void {
   const cacheKey = `history_${playerId}`;
-  const deleted = cache.delete(cacheKey);
-  if (deleted) {
-    console.log(`✅ Cleared cache for player ${playerId}`);
-  } else {
-    console.log(`⚠️ No cache found for player ${playerId}`);
-  }
+  cache.delete(cacheKey);
 }
 
 /**
- * Debug: Log all cache keys
+ * Debug: Get cache statistics
  */
-export function debugCache(): void {
-  console.log('Cache contents:');
-  cache.forEach((value, key) => {
-    const dataSize = Array.isArray(value.data) ? value.data.length : 'N/A';
-    const age = Math.round((Date.now() - value.timestamp) / 1000 / 60);
-    console.log(`  ${key}: ${dataSize} items, ${age} minutes old`);
-  });
+export function debugCache(): { size: number } {
+  return { size: cache.size };
 }

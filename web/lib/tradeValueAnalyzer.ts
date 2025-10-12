@@ -93,12 +93,8 @@ async function analyzePlayer(
     };
   }
 
-  console.log(`Analyzing ${playerName} (FC ID: ${playerId}) for trade date: ${tradeDate.toISOString()}`);
-
   try {
     const historicalValues = await getHistoricalValues(playerId);
-
-    // console.log(`Got ${historicalValues.length} historical values for ${playerName}`);
 
     if (historicalValues.length === 0) {
       console.warn(`⚠️ No historical values for ${playerName} (FC ID: ${playerId})`);

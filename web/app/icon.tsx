@@ -23,12 +23,10 @@ export default async function Icon() {
     }
 
     const league = await response.json();
-    console.log('League avatar:', league.avatar);
 
     if (league.avatar) {
       // Render avatar as a circular image using ImageResponse
       const avatarUrl = `https://sleepercdn.com/avatars/thumbs/${league.avatar}`;
-      console.log('Rendering circular avatar from:', avatarUrl);
 
       return new ImageResponse(
         (
@@ -57,8 +55,6 @@ export default async function Icon() {
           ...size,
         }
       );
-    } else {
-      console.log('No avatar found in league data');
     }
 
     // Fallback: Return a simple colored square if no avatar
