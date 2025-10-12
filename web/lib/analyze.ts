@@ -301,11 +301,12 @@ export function calculateCumulativeScores(teams: TeamStats[]): Record<string, nu
  * based on wins and total points at that point in time.
  *
  * @param teams - Array of team statistics
+ * @param maxWeek - Optional maximum week to consider (only count completed weeks)
  * @returns Object mapping usernames to arrays of standings by week
  */
-export function calculateStandingsOverTime(teams: TeamStats[]): Record<string, number[]> {
+export function calculateStandingsOverTime(teams: TeamStats[], maxWeek?: number): Record<string, number[]> {
   const standingsOverTime: Record<string, number[]> = {};
-  const numWeeks = teams[0]?.weeklyScores.length || 0;
+  const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, teams[0]?.weeklyScores.length || 0) : teams[0]?.weeklyScores.length || 0;
 
   // Initialize
   teams.forEach((team) => {
@@ -348,11 +349,12 @@ export function calculateStandingsOverTime(teams: TeamStats[]): Record<string, n
  * (not cumulative standings).
  *
  * @param teams - Array of team statistics
+ * @param maxWeek - Optional maximum week to consider (only count completed weeks)
  * @returns Object mapping usernames to arrays of weekly rankings
  */
-export function calculateWeeklyRankings(teams: TeamStats[]): Record<string, number[]> {
+export function calculateWeeklyRankings(teams: TeamStats[], maxWeek?: number): Record<string, number[]> {
   const weeklyRankings: Record<string, number[]> = {};
-  const numWeeks = teams[0]?.weeklyScores.length || 0;
+  const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, teams[0]?.weeklyScores.length || 0) : teams[0]?.weeklyScores.length || 0;
 
   // Initialize
   teams.forEach((team) => {
@@ -389,9 +391,10 @@ export function calculateWeeklyRankings(teams: TeamStats[]): Record<string, numb
  * every week, comparing actual wins to hypothetical wins.
  *
  * @param teams - Array of team statistics
+ * @param maxWeek - Optional maximum week to consider (only count completed weeks)
  * @returns Array of play-everyone statistics sorted by difference
  */
-export function calculatePlayEveryoneStats(teams: TeamStats[]): Array<{
+export function calculatePlayEveryoneStats(teams: TeamStats[], maxWeek?: number): Array<{
   username: string;
   teamName: string;
   actualWins: number;
@@ -400,7 +403,7 @@ export function calculatePlayEveryoneStats(teams: TeamStats[]): Array<{
   playAllLosses: number;
   difference: number;
 }> {
-  const numWeeks = teams[0]?.weeklyScores.length || 0;
+  const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, teams[0]?.weeklyScores.length || 0) : teams[0]?.weeklyScores.length || 0;
   const results: Array<{
     username: string;
     teamName: string;
@@ -508,9 +511,10 @@ export function calculateDifferenceFromMedian(teams: TeamStats[]): Record<string
  * all other teams, including win percentage and record.
  *
  * @param teams - Array of team statistics
+ * @param maxWeek - Optional maximum week to consider (only count completed weeks)
  * @returns Array of weekly play-all stats sorted by overall win percentage
  */
-export function calculateWeeklyPlayAll(teams: TeamStats[]): Array<{
+export function calculateWeeklyPlayAll(teams: TeamStats[], maxWeek?: number): Array<{
   username: string;
   teamName: string;
   weeklyRecords: Array<{
@@ -523,7 +527,7 @@ export function calculateWeeklyPlayAll(teams: TeamStats[]): Array<{
   totalLosses: number;
   overallWinPct: number;
 }> {
-  const numWeeks = teams[0]?.weeklyScores.length || 0;
+  const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, teams[0]?.weeklyScores.length || 0) : teams[0]?.weeklyScores.length || 0;
 
   const results = teams.map((team) => {
     const weeklyRecords = [];

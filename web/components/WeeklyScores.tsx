@@ -4,11 +4,13 @@ import { TeamStats } from '@/lib/types';
 
 interface WeeklyScoresProps {
   teams: TeamStats[];
+  maxWeek?: number;
 }
 
-export default function WeeklyScores({ teams }: WeeklyScoresProps) {
-  // Determine number of weeks from first team
-  const numWeeks = teams[0]?.weeklyScores.length || 0;
+export default function WeeklyScores({ teams, maxWeek }: WeeklyScoresProps) {
+  // Determine number of weeks from first team, limited to completed weeks
+  const totalWeeks = teams[0]?.weeklyScores.length || 0;
+  const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, totalWeeks) : totalWeeks;
   const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
 
   return (
@@ -48,7 +50,7 @@ export default function WeeklyScores({ teams }: WeeklyScoresProps) {
                   </div>
                   <div className="text-xs text-gray-500">@{team.username}</div>
                 </td>
-                {team.weeklyScores.map((score, index) => {
+                {team.weeklyScores.slice(0, numWeeks).map((score, index) => {
                   const result = team.weeklyResults[index];
                   return (
                     <td

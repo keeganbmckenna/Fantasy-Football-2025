@@ -12,15 +12,17 @@ import SectionCard from './ui/SectionCard';
 interface StandingsOverTimeProps {
   standingsData: Record<string, number[]>;
   teams: TeamStats[];
+  maxWeek?: number;
 }
 
-export default function StandingsOverTime({ standingsData, teams }: StandingsOverTimeProps) {
+export default function StandingsOverTime({ standingsData, teams, maxWeek }: StandingsOverTimeProps) {
   const { setHoveredItem, clearHovered, isHovered, isOtherHovered } = useChartHover<string>();
   const teamColors = useTeamColors(teams, Object.keys(standingsData));
 
   // Transform data for recharts - memoized for performance
   const chartData = useMemo(() => {
-    const numWeeks = teams[0]?.weeklyScores.length || 0;
+    const totalWeeks = teams[0]?.weeklyScores.length || 0;
+    const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, totalWeeks) : totalWeeks;
     const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
 
     return weeks.map((week, index) => {
@@ -30,7 +32,7 @@ export default function StandingsOverTime({ standingsData, teams }: StandingsOve
       });
       return weekData;
     });
-  }, [standingsData, teams]);
+  }, [standingsData, teams, maxWeek]);
 
   return (
     <SectionCard

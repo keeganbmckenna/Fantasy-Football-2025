@@ -17,14 +17,20 @@ export async function GET() {
     const users: SleeperUser[] = await usersRes.json();
     const rosters: SleeperRoster[] = await rostersRes.json();
 
-    // Get current week or default to 14
-    const currentWeek = league.settings?.leg || 14;
+    // Get current week or default to 18
+    const currentWeek = league.settings?.leg || 18;
+    const lastScoredWeek = league.settings?.last_scored_leg || currentWeek;
 
     // Fetch matchups for all weeks
     const matchupPromises = [];
     for (let week = 1; week <= Math.min(currentWeek, maxWeeks); week++) {
+      // Don't cache the current week's matchups - update in near real-time
+      // Cache completed weeks for one day
+      const isCurrentWeek = week === currentWeek && week > lastScoredWeek;
       matchupPromises.push(
-        fetch(`${baseUrl}/league/${leagueId}/matchups/${week}`).then(res => res.json())
+        fetch(`${baseUrl}/league/${leagueId}/matchups/${week}`, {
+          next: { revalidate: isCurrentWeek ? 0 : 86400 }
+        }).then(res => res.json())
       );
     }
     const matchupsArray = await Promise.all(matchupPromises);

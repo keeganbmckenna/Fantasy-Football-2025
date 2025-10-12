@@ -74,12 +74,14 @@ export default function Home() {
         setMatchups(weeklyMatchups);
 
         // Calculate additional analytics
-        setStandingsOverTime(calculateStandingsOverTime(stats));
+        // Only count completed weeks for standings, rankings and play-everyone analysis
+        setStandingsOverTime(calculateStandingsOverTime(stats, data.lastScoredWeek));
+        // Keep cumulative scores and median difference updating in real-time
         setCumulativeScores(calculateCumulativeScores(stats));
         setDifferenceFromMedian(calculateDifferenceFromMedian(stats));
-        setWeeklyRankings(calculateWeeklyRankings(stats));
-        setPlayEveryoneData(calculatePlayEveryoneStats(stats));
-        setWeeklyPlayAllData(calculateWeeklyPlayAll(stats));
+        setWeeklyRankings(calculateWeeklyRankings(stats, data.lastScoredWeek));
+        setPlayEveryoneData(calculatePlayEveryoneStats(stats, data.lastScoredWeek));
+        setWeeklyPlayAllData(calculateWeeklyPlayAll(stats, data.lastScoredWeek));
 
         // Calculate division standings and wild card race
         const divisionStandings = calculateDivisionStandings(stats);
@@ -282,10 +284,10 @@ export default function Home() {
         {activeTab === 'weekly' && (
           <>
             <section>
-              <WeeklyScores teams={teamStats} />
+              <WeeklyScores teams={teamStats} maxWeek={leagueData?.lastScoredWeek} />
             </section>
             <section>
-              <WeeklyRankingsHeatmap rankingsData={weeklyRankings} teams={teamStats} />
+              <WeeklyRankingsHeatmap rankingsData={weeklyRankings} teams={teamStats} maxWeek={leagueData?.lastScoredWeek} />
             </section>
           </>
         )}
@@ -294,7 +296,7 @@ export default function Home() {
         {activeTab === 'trends' && (
           <>
             <section>
-              <StandingsOverTime standingsData={standingsOverTime} teams={teamStats} />
+              <StandingsOverTime standingsData={standingsOverTime} teams={teamStats} maxWeek={leagueData?.lastScoredWeek} />
             </section>
             <section>
               <CumulativeScores cumulativeData={cumulativeScores} teams={teamStats} />

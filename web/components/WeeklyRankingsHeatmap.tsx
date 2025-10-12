@@ -8,10 +8,12 @@ import SectionCard from './ui/SectionCard';
 interface WeeklyRankingsHeatmapProps {
   rankingsData: Record<string, number[]>;
   teams: TeamStats[];
+  maxWeek?: number;
 }
 
-export default function WeeklyRankingsHeatmap({ rankingsData, teams }: WeeklyRankingsHeatmapProps) {
-  const numWeeks = teams[0]?.weeklyScores.length || 0;
+export default function WeeklyRankingsHeatmap({ rankingsData, teams, maxWeek }: WeeklyRankingsHeatmapProps) {
+  const totalWeeks = teams[0]?.weeklyScores.length || 0;
+  const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, totalWeeks) : totalWeeks;
   const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
 
   // Calculate stats - memoized for performance
@@ -19,8 +21,8 @@ export default function WeeklyRankingsHeatmap({ rankingsData, teams }: WeeklyRan
     const sortedTeams = [...teams].sort((a, b) => a.standing - b.standing);
 
     return sortedTeams.map((team) => {
-      const rankings = rankingsData[team.username] || [];
-      const avgRanking = rankings.reduce((a, b) => a + b, 0) / rankings.length;
+      const rankings = (rankingsData[team.username] || []).slice(0, numWeeks);
+      const avgRanking = rankings.length > 0 ? rankings.reduce((a, b) => a + b, 0) / rankings.length : 0;
       const sortedRankings = [...rankings].sort((a, b) => a - b);
       const medRanking = sortedRankings[Math.floor(sortedRankings.length / 2)];
 
@@ -30,7 +32,7 @@ export default function WeeklyRankingsHeatmap({ rankingsData, teams }: WeeklyRan
         medRanking,
       };
     });
-  }, [teams, rankingsData]);
+  }, [teams, rankingsData, numWeeks]);
 
   const legend = (
     <div className="flex items-center gap-4 text-xs text-gray-600">
@@ -93,7 +95,7 @@ export default function WeeklyRankingsHeatmap({ rankingsData, teams }: WeeklyRan
                     <div className="text-sm font-medium text-gray-900">{team.teamName}</div>
                     <div className="text-xs text-gray-500">@{team.username}</div>
                   </td>
-                  {rankings.map((ranking, index) => (
+                  {rankings.slice(0, numWeeks).map((ranking, index) => (
                     <td
                       key={index}
                       className={`px-3 py-3 whitespace-nowrap text-center text-sm font-semibold ${getRankingColor(
