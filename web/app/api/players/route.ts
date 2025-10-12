@@ -8,11 +8,27 @@ interface SleeperPlayer {
   position?: string;
 }
 
+// In-memory cache
+let cachedPlayerMap: Record<string, string> | null = null;
+let cachedPlayerPositions: Record<string, string> | null = null;
+let lastFetchTime: number = 0;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
 export async function GET() {
   try {
-    // Fetch with 24 hour cache
+    const now = Date.now();
+
+    // Return cached data if it's less than 24 hours old
+    if (cachedPlayerMap && cachedPlayerPositions && (now - lastFetchTime) < CACHE_DURATION) {
+      return NextResponse.json({
+        players: cachedPlayerMap,
+        positions: cachedPlayerPositions
+      });
+    }
+
+    // Fetch fresh data - disable Next.js cache to avoid 2MB limit error
     const res = await fetch('https://api.sleeper.app/v1/players/nfl', {
-      next: { revalidate: 86400 }
+      cache: 'no-store'
     });
 
     if (!res.ok) {
@@ -21,8 +37,9 @@ export async function GET() {
 
     const players: Record<string, SleeperPlayer> = await res.json();
 
-    // Create a simplified map of player ID to player name
+    // Create maps for player names and positions
     const playerMap: Record<string, string> = {};
+    const playerPositions: Record<string, string> = {};
 
     Object.entries(players).forEach(([id, player]) => {
       if (player.player_id) {
@@ -33,11 +50,20 @@ export async function GET() {
 
         if (name) {
           playerMap[id] = team && position ? `${name} (${team} ${position})` : name;
+          playerPositions[id] = position;
         }
       }
     });
 
-    return NextResponse.json({ players: playerMap });
+    // Update cache
+    cachedPlayerMap = playerMap;
+    cachedPlayerPositions = playerPositions;
+    lastFetchTime = now;
+
+    return NextResponse.json({
+      players: playerMap,
+      positions: playerPositions
+    });
   } catch (error) {
     console.error('Error fetching player data:', error);
     return NextResponse.json(

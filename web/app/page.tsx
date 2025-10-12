@@ -51,6 +51,7 @@ export default function Home() {
 
   // Transaction data
   const [allTransactions, setAllTransactions] = useState<ProcessedTransaction[]>([]);
+  const [playerPositions, setPlayerPositions] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -94,9 +95,12 @@ export default function Home() {
         ]);
 
         let playerNames: Record<string, string> = {};
+        let positions: Record<string, string> = {};
         if (playerRes.ok) {
           const playerData = await playerRes.json();
           playerNames = playerData.players || {};
+          positions = playerData.positions || {};
+          setPlayerPositions(positions);
         }
 
         if (transactionRes.ok) {
@@ -304,7 +308,7 @@ export default function Home() {
         {/* Transactions Tab */}
         {activeTab === 'transactions' && (
           <section>
-            <AllTransactions transactions={allTransactions} />
+            <AllTransactions transactions={allTransactions} playerPositions={playerPositions} />
           </section>
         )}
       </main>

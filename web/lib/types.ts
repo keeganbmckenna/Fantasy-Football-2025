@@ -200,12 +200,16 @@ export interface ProcessedTransaction {
       teamName: string;
       gives: string[];
       receives: string[];
+      givesIds: string[];
+      receivesIds: string[];
     };
     team2: {
       username: string;
       teamName: string;
       gives: string[];
       receives: string[];
+      givesIds: string[];
+      receivesIds: string[];
     };
   };
 }
@@ -225,6 +229,40 @@ export interface TransactionStats {
   };
 }
 
+export interface PlayerTradeValue {
+  playerName: string;
+  valueAtTrade: number | null;
+  valueToday: number | null;
+  gain: number | null;
+  gainPercentage: number | null;
+}
+
+export interface TradeAnalysis {
+  tradeId: string;
+  status: 'success' | 'partial' | 'error';
+  errorMessage?: string;
+
+  team1: {
+    totalValueAtTrade: number;
+    totalValueToday: number;
+    totalGain: number;
+    gainPercentage: number;
+    players: PlayerTradeValue[];
+  };
+
+  team2: {
+    totalValueAtTrade: number;
+    totalValueToday: number;
+    totalGain: number;
+    gainPercentage: number;
+    players: PlayerTradeValue[];
+  };
+
+  winner: 'team1' | 'team2' | 'even';
+  winMargin: number;
+  analyzedAt: Date;
+}
+
 export interface TradeInfo {
   id: string;
   week: number;
@@ -233,14 +271,19 @@ export interface TradeInfo {
     username: string;
     teamName: string;
     rosterId: number;
-    gives: string[];
-    receives: string[];
+    gives: string[]; // Player names
+    receives: string[]; // Player names
+    givesIds: string[]; // Sleeper player IDs
+    receivesIds: string[]; // Sleeper player IDs
   };
   team2: {
     username: string;
     teamName: string;
     rosterId: number;
-    gives: string[];
-    receives: string[];
+    gives: string[]; // Player names
+    receives: string[]; // Player names
+    givesIds: string[]; // Sleeper player IDs
+    receivesIds: string[]; // Sleeper player IDs
   };
+  analysis?: TradeAnalysis;
 }

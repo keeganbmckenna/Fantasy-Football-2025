@@ -282,16 +282,24 @@ export function extractTrades(
     const team1Receives: string[] = [];
     const team2Gives: string[] = [];
     const team2Receives: string[] = [];
+    const team1GivesIds: string[] = [];
+    const team1ReceivesIds: string[] = [];
+    const team2GivesIds: string[] = [];
+    const team2ReceivesIds: string[] = [];
 
     if (transaction.adds) {
       Object.entries(transaction.adds).forEach(([playerId, rosterId]) => {
         const playerName = playerNames[playerId] || playerId;
         if (rosterId === rosterId1) {
           team1Receives.push(playerName);
+          team1ReceivesIds.push(playerId);
           team2Gives.push(playerName);
+          team2GivesIds.push(playerId);
         } else if (rosterId === rosterId2) {
           team2Receives.push(playerName);
+          team2ReceivesIds.push(playerId);
           team1Gives.push(playerName);
+          team1GivesIds.push(playerId);
         }
       });
     }
@@ -334,6 +342,8 @@ export function extractTrades(
         rosterId: rosterId1,
         gives: team1Gives,
         receives: team1Receives,
+        givesIds: team1GivesIds,
+        receivesIds: team1ReceivesIds,
       },
       team2: {
         username: team2Info.username,
@@ -341,6 +351,8 @@ export function extractTrades(
         rosterId: rosterId2,
         gives: team2Gives,
         receives: team2Receives,
+        givesIds: team2GivesIds,
+        receivesIds: team2ReceivesIds,
       },
     });
   });
@@ -387,12 +399,16 @@ export function tradesToProcessedTransactions(trades: TradeInfo[]): ProcessedTra
         teamName: trade.team1.teamName,
         gives: trade.team1.gives,
         receives: trade.team1.receives,
+        givesIds: trade.team1.givesIds,
+        receivesIds: trade.team1.receivesIds,
       },
       team2: {
         username: trade.team2.username,
         teamName: trade.team2.teamName,
         gives: trade.team2.gives,
         receives: trade.team2.receives,
+        givesIds: trade.team2.givesIds,
+        receivesIds: trade.team2.receivesIds,
       },
     },
   }));
