@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import PlayoffRace from '@/components/PlayoffRace';
 import WeeklyScores from '@/components/WeeklyScores';
 import WeeklyMatchups from '@/components/WeeklyMatchups';
@@ -172,9 +173,20 @@ export default function Home() {
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900">
-              {leagueData?.league?.name || 'Fantasy Football'}
-            </h1>
+            <div className="flex items-center justify-center gap-4">
+              {leagueData?.league?.avatar && (
+                <Image
+                  src={`https://sleepercdn.com/avatars/${leagueData.league.avatar}`}
+                  alt="League Avatar"
+                  width={64}
+                  height={64}
+                  className="rounded-full"
+                />
+              )}
+              <h1 className="text-4xl font-bold text-gray-900">
+                {leagueData?.league?.name || 'Fantasy Football'}
+              </h1>
+            </div>
             <p className="mt-2 text-lg text-gray-600">
               Season {leagueData?.league?.season || '2025'}
             </p>
