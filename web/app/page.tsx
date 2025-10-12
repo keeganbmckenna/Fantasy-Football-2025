@@ -65,8 +65,8 @@ export default function Home() {
         const data: LeagueData = await response.json();
         setLeagueData(data);
 
-        // Calculate stats
-        const stats = calculateTeamStats(data);
+        // Calculate stats (pass lastScoredWeek to limit performance metrics to completed weeks)
+        const stats = calculateTeamStats(data, data.lastScoredWeek);
         setTeamStats(stats);
 
         // Get matchups

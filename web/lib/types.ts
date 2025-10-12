@@ -75,6 +75,7 @@ export interface TeamStats {
   avgPoints: number;
   weeklyScores: number[];
   weeklyResults: ('W' | 'L' | 'T')[];
+  weeklyOpponentScores: number[];
   standing: number;
   standingValue: number;
   division?: number;
@@ -85,6 +86,15 @@ export interface TeamStats {
   gamesBack?: number;
   wildCardRank?: number;
   wildCardGamesOut?: number;
+  // Performance breakdown metrics
+  avgPointsInWins?: number;
+  medianPointsInWins?: number;
+  avgPointsInLosses?: number;
+  medianPointsInLosses?: number;
+  avgWinMargin?: number;
+  medianWinMargin?: number;
+  avgLossMargin?: number;
+  medianLossMargin?: number;
 }
 
 export interface WeekMatchup {
