@@ -1,6 +1,6 @@
 // Simple in-memory cache for FantasyCalc API responses
 interface CachedData {
-  data: any;
+  data: unknown;
   timestamp: number;
 }
 
@@ -15,7 +15,7 @@ interface HistoricalValue {
 
 interface HistoricalValuesResponse {
   historicalValues: HistoricalValue[];
-  impliedValues: any[]; // We don't use this for now
+  impliedValues: unknown[]; // We don't use this for now
 }
 
 interface FantasyCalcPlayer {
@@ -45,7 +45,7 @@ export async function getHistoricalValues(
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     // Only return cached data if it's not empty
     if (Array.isArray(cached.data) && cached.data.length > 0) {
-      return cached.data;
+      return cached.data as HistoricalValue[];
     }
     // If cached data is empty, fall through to fetch fresh data
     console.log(`Cache hit for ${playerId} but data is empty, retrying...`);
@@ -165,7 +165,7 @@ async function fetchAllPlayers(): Promise<FantasyCalcPlayer[]> {
   // Check cache first
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < PLAYER_LIST_CACHE_DURATION) {
-    return cached.data;
+    return cached.data as FantasyCalcPlayer[];
   }
 
   try {
