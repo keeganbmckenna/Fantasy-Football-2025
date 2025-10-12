@@ -8,6 +8,38 @@ const cache = new Map<string, CachedData>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 const PLAYER_LIST_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours for player list
 
+// Retry configuration
+const MAX_RETRIES = 4;
+const INITIAL_RETRY_DELAY = 100; // 100ms
+
+/**
+ * Sleep helper for retry delays
+ */
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Retry a function with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  retries: number = MAX_RETRIES,
+  delay: number = INITIAL_RETRY_DELAY,
+  attempt: number = 1
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (attempt >= retries) {
+      throw error;
+    }
+    console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+    await sleep(delay);
+    return retryWithBackoff(fn, retries, delay * 2, attempt + 1);
+  }
+}
+
 interface HistoricalValue {
   date: string; // Format: "MM/DD/YYYY"
   value: number;
@@ -47,23 +79,46 @@ export async function getHistoricalValues(
     if (Array.isArray(cached.data) && cached.data.length > 0) {
       return cached.data as HistoricalValue[];
     }
-    // If cached data is empty, fall through to fetch fresh data
+    // If cached data is empty, clear it and retry
+    console.log(`Clearing empty cache for player ${playerId} and retrying...`);
+    cache.delete(cacheKey);
   }
 
   try {
-    const response = await fetch(
-      `https://api.fantasycalc.com/trades/implied/${playerId}?isDynasty=false&numQbs=1`
-    );
+    // Use retry logic with exponential backoff
+    const data = await retryWithBackoff(async () => {
+      const response = await fetch(
+        `https://api.fantasycalc.com/trades/implied/${playerId}?isDynasty=false&numQbs=1`
+      );
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.warn(`Player ${playerId} not found in FantasyCalc`);
-        return [];
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn(`Player ${playerId} not found in FantasyCalc (404)`);
+          // Return special marker for 404 - don't retry
+          return { historicalValues: [], is404: true };
+        }
+        throw new Error(`API error: ${response.status}`);
       }
-      throw new Error(`API error: ${response.status}`);
-    }
 
-    const data: HistoricalValuesResponse = await response.json();
+      const jsonData: HistoricalValuesResponse = await response.json();
+
+      // If we got a successful response but no data, it means the player legitimately has no historical values
+      // Don't throw an error - just return the empty array
+      if (!jsonData.historicalValues || jsonData.historicalValues.length === 0) {
+        console.log(`No historical values available for player ${playerId}`);
+        return { historicalValues: [], noData: true };
+      }
+
+      return jsonData;
+    });
+
+    // Handle special cases (404 or no data available)
+    if ('is404' in data && data.is404) {
+      return [];
+    }
+    if ('noData' in data && data.noData) {
+      return [];
+    }
 
     // Only cache if we got actual data
     if (data.historicalValues && data.historicalValues.length > 0) {
@@ -71,11 +126,12 @@ export async function getHistoricalValues(
         data: data.historicalValues,
         timestamp: Date.now(),
       });
+      console.log(`✓ Cached ${data.historicalValues.length} historical values for player ${playerId}`);
     }
 
     return data.historicalValues;
   } catch (error) {
-    console.error(`Error fetching historical values for player ${playerId}:`, error);
+    console.error(`Error fetching historical values for player ${playerId} after retries:`, error);
     return [];
   }
 }
@@ -161,32 +217,54 @@ function parseDate(dateStr: string): Date {
 async function fetchAllPlayers(): Promise<FantasyCalcPlayer[]> {
   const cacheKey = 'all_players';
 
-  // Check cache first
+  // Check cache first - only use if it has data
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < PLAYER_LIST_CACHE_DURATION) {
-    return cached.data as FantasyCalcPlayer[];
+    if (Array.isArray(cached.data) && cached.data.length > 0) {
+      console.log(`✓ Using cached player list (${cached.data.length} players)`);
+      return cached.data as FantasyCalcPlayer[];
+    }
+    // If cached data is empty, clear it and retry
+    console.log('Clearing empty player list cache and retrying...');
+    cache.delete(cacheKey);
   }
 
   try {
-    const response = await fetch(
-      'https://api.fantasycalc.com/values/current?isDynasty=true&numQbs=1'
-    );
+    // Use retry logic with exponential backoff
+    const players = await retryWithBackoff(async () => {
+      console.log('Fetching player list from FantasyCalc API...');
+      const response = await fetch(
+        'https://api.fantasycalc.com/values/current?isDynasty=true&numQbs=1'
+      );
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
 
-    const players: FantasyCalcPlayer[] = await response.json();
+      const data: FantasyCalcPlayer[] = await response.json();
 
-    // Store in cache
-    cache.set(cacheKey, {
-      data: players,
-      timestamp: Date.now(),
+      // Validate that we got actual data - this is critical, so retry if empty
+      if (!Array.isArray(data) || data.length === 0) {
+        console.warn('Empty or invalid player list returned from API, will retry...');
+        throw new Error('Empty player list returned from API');
+      }
+
+      console.log(`✓ Fetched ${data.length} players from FantasyCalc API`);
+      return data;
     });
+
+    // Only cache if we got actual data (should always be true here due to validation above)
+    if (players.length > 0) {
+      cache.set(cacheKey, {
+        data: players,
+        timestamp: Date.now(),
+      });
+      console.log(`✓ Cached player list (${players.length} players)`);
+    }
 
     return players;
   } catch (error) {
-    console.error('Error fetching player list from FantasyCalc:', error);
+    console.error('Error fetching player list from FantasyCalc after retries:', error);
     return [];
   }
 }
@@ -223,11 +301,18 @@ export async function getFantasyCalcId(
   sleeperId?: string
 ): Promise<string | null> {
   // Fetch all players
-  const players = await fetchAllPlayers();
+  let players = await fetchAllPlayers();
 
+  // If player list is empty, clear cache and retry once
   if (players.length === 0) {
-    console.warn('No players loaded from FantasyCalc');
-    return null;
+    console.warn('No players loaded from FantasyCalc, clearing cache and retrying...');
+    cache.delete('all_players');
+    players = await fetchAllPlayers();
+
+    if (players.length === 0) {
+      console.error('Still no players loaded from FantasyCalc after retry');
+      return null;
+    }
   }
 
   // PREFERRED: Try matching by Sleeper ID first (100% accurate)
