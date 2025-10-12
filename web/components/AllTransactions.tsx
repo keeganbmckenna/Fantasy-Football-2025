@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import SectionCard from './ui/SectionCard';
 import type { ProcessedTransaction, TradeAnalysis } from '@/lib/types';
 import { analyzeTrade } from '@/lib/tradeValueAnalyzer';
@@ -111,6 +111,78 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
     analyzeTransactions();
   }, [transactions, playerPositions]);
 
+  // Calculate per-team value gains/losses
+  const teamValueSummary = useMemo(() => {
+    const teamMap = new Map<string, {
+      teamName: string;
+      username: string;
+      tradesGain: number;
+      addDropsGain: number;
+      totalGain: number;
+    }>();
+
+    // Process trade analyses
+    tradeAnalyses.forEach((analysis, transactionId) => {
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (!transaction || !transaction.tradeDetails) return;
+
+      // Add gain for team1
+      const team1Key = transaction.tradeDetails.team1.username;
+      if (!teamMap.has(team1Key)) {
+        teamMap.set(team1Key, {
+          teamName: transaction.tradeDetails.team1.teamName,
+          username: transaction.tradeDetails.team1.username,
+          tradesGain: 0,
+          addDropsGain: 0,
+          totalGain: 0,
+        });
+      }
+      const team1 = teamMap.get(team1Key)!;
+      team1.tradesGain += analysis.team1.totalGain;
+
+      // Add gain for team2
+      const team2Key = transaction.tradeDetails.team2.username;
+      if (!teamMap.has(team2Key)) {
+        teamMap.set(team2Key, {
+          teamName: transaction.tradeDetails.team2.teamName,
+          username: transaction.tradeDetails.team2.username,
+          tradesGain: 0,
+          addDropsGain: 0,
+          totalGain: 0,
+        });
+      }
+      const team2 = teamMap.get(team2Key)!;
+      team2.tradesGain += analysis.team2.totalGain;
+    });
+
+    // Process add/drop analyses
+    addDropAnalyses.forEach((analysis, transactionId) => {
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (!transaction) return;
+
+      const teamKey = transaction.username;
+      if (!teamMap.has(teamKey)) {
+        teamMap.set(teamKey, {
+          teamName: transaction.teamName,
+          username: transaction.username,
+          tradesGain: 0,
+          addDropsGain: 0,
+          totalGain: 0,
+        });
+      }
+      const team = teamMap.get(teamKey)!;
+      team.addDropsGain += analysis.netChange;
+    });
+
+    // Calculate totals and sort
+    const teams = Array.from(teamMap.values()).map(team => ({
+      ...team,
+      totalGain: team.tradesGain + team.addDropsGain,
+    }));
+
+    return teams.sort((a, b) => b.totalGain - a.totalGain);
+  }, [tradeAnalyses, addDropAnalyses, transactions]);
+
   // Count transactions by type
   const allCount = transactions.length;
   const tradesCount = transactions.filter(t => t.type === 'trade').length;
@@ -123,6 +195,62 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
       gradientType="secondary"
     >
       <div className="p-6">
+        {/* Team Value Summary Table */}
+        {!isAnalyzing && teamValueSummary.length > 0 && (
+          <div className="mb-8 overflow-x-auto">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Team Value Summary</h3>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Team
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trades
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Adds/Drops
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {teamValueSummary.map((team) => (
+                  <tr key={team.username} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{team.teamName}</div>
+                      <div className="text-xs text-gray-500">{team.username}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <span className={team.tradesGain > 0 ? 'text-green-600 font-medium' : team.tradesGain < 0 ? 'text-red-600 font-medium' : 'text-gray-900 font-medium'}>
+                        {team.tradesGain > 0 ? '+' : ''}{team.tradesGain.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <span className={team.addDropsGain > 0 ? 'text-green-600 font-medium' : team.addDropsGain < 0 ? 'text-red-600 font-medium' : 'text-gray-900 font-medium'}>
+                        {team.addDropsGain > 0 ? '+' : ''}{team.addDropsGain.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <span className={`font-bold ${team.totalGain > 0 ? 'text-green-600' : team.totalGain < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                        {team.totalGain > 0 ? '+' : ''}{team.totalGain.toLocaleString()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {isAnalyzing && (
+          <div className="mb-8 p-6 bg-gray-50 text-center text-gray-500">
+            Analyzing transactions...
+          </div>
+        )}
+
         {/* Filter buttons */}
         <div className="flex flex-wrap gap-2 mb-6">
           <button
