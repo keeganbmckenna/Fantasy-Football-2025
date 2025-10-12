@@ -118,6 +118,7 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
       username: string;
       tradesGain: number;
       addDropsGain: number;
+      addDropsRosterDelta: number;
       totalGain: number;
     }>();
 
@@ -134,11 +135,12 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
           username: transaction.tradeDetails.team1.username,
           tradesGain: 0,
           addDropsGain: 0,
+          addDropsRosterDelta: 0,
           totalGain: 0,
         });
       }
       const team1 = teamMap.get(team1Key)!;
-      team1.tradesGain += analysis.team1.totalGain;
+      team1.tradesGain += analysis.team1.tradeQuality;
 
       // Add gain for team2
       const team2Key = transaction.tradeDetails.team2.username;
@@ -148,11 +150,12 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
           username: transaction.tradeDetails.team2.username,
           tradesGain: 0,
           addDropsGain: 0,
+          addDropsRosterDelta: 0,
           totalGain: 0,
         });
       }
       const team2 = teamMap.get(team2Key)!;
-      team2.tradesGain += analysis.team2.totalGain;
+      team2.tradesGain += analysis.team2.tradeQuality;
     });
 
     // Process add/drop analyses
@@ -167,11 +170,13 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
           username: transaction.username,
           tradesGain: 0,
           addDropsGain: 0,
+          addDropsRosterDelta: 0,
           totalGain: 0,
         });
       }
       const team = teamMap.get(teamKey)!;
-      team.addDropsGain += analysis.netChange;
+      team.addDropsGain += analysis.decisionQuality;
+      team.addDropsRosterDelta += 0; // No longer used
     });
 
     // Calculate totals and sort
@@ -463,7 +468,7 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
 
                         {/* Trade Analysis Section */}
                         {analysis ? (
-                        <div className="mt-6 pt-6 border-t border-gray-200">
+                        <div className="mt-6 pt-6 border-t border-gray-200 text-gray-600">
                             <div className="space-y-4">
                               {(() => {
                                 return (
@@ -493,31 +498,105 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                       {/* Team 1 Summary */}
                                       <div className="bg-gray-50 p-4 rounded-lg">
-                                        <div className="flex justify-between items-center">
-                                          <span className="font-semibold text-gray-900">{transaction.tradeDetails.team1.teamName}</span>
-                                          <span className={`font-bold text-lg ${
-                                            analysis.team1.totalGain >= 0 ? 'text-green-600' : 'text-red-600'
-                                          }`}>
-                                            {analysis.team1.totalGain >= 0 ? '+' : ''}{analysis.team1.totalGain.toLocaleString()}
-                                            <span className="text-sm ml-1">
-                                              ({analysis.team1.gainPercentage >= 0 ? '+' : ''}{analysis.team1.gainPercentage.toFixed(1)}%)
-                                            </span>
-                                          </span>
+                                        <div className="space-y-3">
+                                          <div className="font-semibold text-gray-900">{transaction.tradeDetails.team1.teamName}</div>
+
+                                          <div className="space-y-1">
+                                            <div className="text-xs font-medium text-gray-500 uppercase">Gave Up</div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Value at trade:</span>
+                                              <span className="font-medium">{analysis.team1.gaveUpValueAtTrade.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Current value:</span>
+                                              <span className="font-medium">{analysis.team1.gaveUpValueToday.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Performance:</span>
+                                              <span className={`font-semibold ${analysis.team1.gaveUpGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {analysis.team1.gaveUpGain >= 0 ? '+' : ''}{analysis.team1.gaveUpGain.toLocaleString()} ({analysis.team1.gaveUpGainPercentage >= 0 ? '+' : ''}{analysis.team1.gaveUpGainPercentage.toFixed(1)}%)
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="space-y-1">
+                                            <div className="text-xs font-medium text-gray-500 uppercase">Received</div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Value at trade:</span>
+                                              <span className="font-medium">{analysis.team1.receivedValueAtTrade.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Current value:</span>
+                                              <span className="font-medium">{analysis.team1.receivedValueToday.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Performance:</span>
+                                              <span className={`font-semibold ${analysis.team1.receivedGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {analysis.team1.receivedGain >= 0 ? '+' : ''}{analysis.team1.receivedGain.toLocaleString()} ({analysis.team1.receivedGainPercentage >= 0 ? '+' : ''}{analysis.team1.receivedGainPercentage.toFixed(1)}%)
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="pt-2 border-t border-gray-300">
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-sm font-semibold text-gray-700">Trade Quality:</span>
+                                              <span className={`font-bold text-base ${analysis.team1.tradeQuality >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {analysis.team1.tradeQuality >= 0 ? '+' : ''}{analysis.team1.tradeQuality.toLocaleString()}
+                                              </span>
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
 
                                       {/* Team 2 Summary */}
                                       <div className="bg-gray-50 p-4 rounded-lg">
-                                        <div className="flex justify-between items-center">
-                                          <span className="font-semibold text-gray-900">{transaction.tradeDetails.team2.teamName}</span>
-                                          <span className={`font-bold text-lg ${
-                                            analysis.team2.totalGain >= 0 ? 'text-green-600' : 'text-red-600'
-                                          }`}>
-                                            {analysis.team2.totalGain >= 0 ? '+' : ''}{analysis.team2.totalGain.toLocaleString()}
-                                            <span className="text-sm ml-1">
-                                              ({analysis.team2.gainPercentage >= 0 ? '+' : ''}{analysis.team2.gainPercentage.toFixed(1)}%)
-                                            </span>
-                                          </span>
+                                        <div className="space-y-3">
+                                          <div className="font-semibold text-gray-900">{transaction.tradeDetails.team2.teamName}</div>
+
+                                          <div className="space-y-1">
+                                            <div className="text-xs font-medium text-gray-500 uppercase">Gave Up</div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Value at trade:</span>
+                                              <span className="font-medium">{analysis.team2.gaveUpValueAtTrade.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Current value:</span>
+                                              <span className="font-medium">{analysis.team2.gaveUpValueToday.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Performance:</span>
+                                              <span className={`font-semibold ${analysis.team2.gaveUpGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {analysis.team2.gaveUpGain >= 0 ? '+' : ''}{analysis.team2.gaveUpGain.toLocaleString()} ({analysis.team2.gaveUpGainPercentage >= 0 ? '+' : ''}{analysis.team2.gaveUpGainPercentage.toFixed(1)}%)
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="space-y-1">
+                                            <div className="text-xs font-medium text-gray-500 uppercase">Received</div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Value at trade:</span>
+                                              <span className="font-medium">{analysis.team2.receivedValueAtTrade.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Current value:</span>
+                                              <span className="font-medium">{analysis.team2.receivedValueToday.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                              <span>Performance:</span>
+                                              <span className={`font-semibold ${analysis.team2.receivedGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {analysis.team2.receivedGain >= 0 ? '+' : ''}{analysis.team2.receivedGain.toLocaleString()} ({analysis.team2.receivedGainPercentage >= 0 ? '+' : ''}{analysis.team2.receivedGainPercentage.toFixed(1)}%)
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="pt-2 border-t border-gray-300">
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-sm font-semibold text-gray-700">Trade Quality:</span>
+                                              <span className={`font-bold text-base ${analysis.team2.tradeQuality >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {analysis.team2.tradeQuality >= 0 ? '+' : ''}{analysis.team2.tradeQuality.toLocaleString()}
+                                              </span>
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
@@ -613,11 +692,16 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
                                 {analysis.droppedPlayer &&
                                  analysis.droppedPlayer.valueAtTransaction !== null &&
                                  analysis.droppedPlayer.valueToday !== null ? (
-                                  <div className="text-xs text-gray-600">
-                                    {analysis.droppedPlayer.valueAtTransaction.toLocaleString()} → {analysis.droppedPlayer.valueToday.toLocaleString()}
-                                    <span className={`ml-1 ${analysis.droppedPlayer.gain! >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                      ({analysis.droppedPlayer.gain! >= 0 ? '+' : ''}{analysis.droppedPlayer.gain!.toLocaleString()}, {analysis.droppedPlayer.gainPercentage! >= 0 ? '+' : ''}{analysis.droppedPlayer.gainPercentage!.toFixed(1)}%)
-                                    </span>
+                                  <div className="text-xs space-y-0.5">
+                                    <div className="text-gray-600">
+                                      Value at transaction: <span className="font-medium">{analysis.droppedPlayer.valueAtTransaction.toLocaleString()}</span>
+                                    </div>
+                                    <div className="text-gray-600">
+                                      Current value: <span className="font-medium">{analysis.droppedPlayer.valueToday.toLocaleString()}</span>
+                                    </div>
+                                    <div className={analysis.droppedPlayer.gain! >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                      Performance: <span className="font-semibold">{analysis.droppedPlayer.gain! >= 0 ? '+' : ''}{analysis.droppedPlayer.gain!.toLocaleString()}</span> ({analysis.droppedPlayer.gainPercentage! >= 0 ? '+' : ''}{analysis.droppedPlayer.gainPercentage!.toFixed(1)}%)
+                                    </div>
                                   </div>
                                 ) : isKickerOrDefense(transaction.droppedPlayerId) ? (
                                   <div className="text-xs text-gray-500 italic">N/A (K/DST)</div>
@@ -640,11 +724,16 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
                                 {analysis.addedPlayer &&
                                  analysis.addedPlayer.valueAtTransaction !== null &&
                                  analysis.addedPlayer.valueToday !== null ? (
-                                  <div className="text-xs text-gray-600">
-                                    {analysis.addedPlayer.valueAtTransaction.toLocaleString()} → {analysis.addedPlayer.valueToday.toLocaleString()}
-                                    <span className={`ml-1 ${analysis.addedPlayer.gain! >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                      ({analysis.addedPlayer.gain! >= 0 ? '+' : ''}{analysis.addedPlayer.gain!.toLocaleString()}, {analysis.addedPlayer.gainPercentage! >= 0 ? '+' : ''}{analysis.addedPlayer.gainPercentage!.toFixed(1)}%)
-                                    </span>
+                                  <div className="text-xs space-y-0.5">
+                                    <div className="text-gray-600">
+                                      Value at transaction: <span className="font-medium">{analysis.addedPlayer.valueAtTransaction.toLocaleString()}</span>
+                                    </div>
+                                    <div className="text-gray-600">
+                                      Current value: <span className="font-medium">{analysis.addedPlayer.valueToday.toLocaleString()}</span>
+                                    </div>
+                                    <div className={analysis.addedPlayer.gain! >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                      Performance: <span className="font-semibold">{analysis.addedPlayer.gain! >= 0 ? '+' : ''}{analysis.addedPlayer.gain!.toLocaleString()}</span> ({analysis.addedPlayer.gainPercentage! >= 0 ? '+' : ''}{analysis.addedPlayer.gainPercentage!.toFixed(1)}%)
+                                    </div>
                                   </div>
                                 ) : isKickerOrDefense(transaction.playerId) ? (
                                   <div className="text-xs text-gray-500 italic">N/A (K/DST)</div>
@@ -654,22 +743,30 @@ export default function AllTransactions({ transactions, playerPositions }: AllTr
                           </div>
                         )}
 
-                        {/* Net Change (only for swaps with both values) */}
-                        {transaction.type === 'swap' &&
-                         analysis.addedPlayer?.valueAtTransaction !== null &&
-                         analysis.droppedPlayer?.valueAtTransaction !== null && (
-                          <div className="pt-3 border-t border-gray-200">
-                            <div className="flex items-center text-sm gap-2">
-                              <span className="font-medium text-gray-700">Net change:</span>
-                              <span className={`font-bold ${analysis.netChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {analysis.netChange >= 0 ? '+' : ''}{analysis.netChange.toLocaleString()}
-                                <span className="text-xs ml-1">
-                                  ({analysis.netChangePercentage >= 0 ? '+' : ''}{analysis.netChangePercentage.toFixed(1)}%)
-                                </span>
-                              </span>
-                            </div>
+                        {/* Decision Quality (for all transaction types) */}
+                        <div className="pt-3 border-t border-gray-200">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-semibold text-gray-700">Decision Quality:</span>
+                            <span className={`font-bold text-base ${analysis.decisionQuality >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {analysis.decisionQuality >= 0 ? '+' : ''}{analysis.decisionQuality.toLocaleString()}
+                            </span>
                           </div>
-                        )}
+                          {transaction.type === 'swap' && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              What you got gained {analysis.addedPlayer?.gain ?? 0 >= 0 ? '+' : ''}{(analysis.addedPlayer?.gain ?? 0).toLocaleString()}, what you dropped gained {analysis.droppedPlayer?.gain ?? 0 >= 0 ? '+' : ''}{(analysis.droppedPlayer?.gain ?? 0).toLocaleString()}
+                            </div>
+                          )}
+                          {transaction.type === 'add' && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Player gained {analysis.addedPlayer?.gain ?? 0 >= 0 ? '+' : ''}{(analysis.addedPlayer?.gain ?? 0).toLocaleString()} since acquisition
+                            </div>
+                          )}
+                          {transaction.type === 'drop' && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Player gained {analysis.droppedPlayer?.gain ?? 0 >= 0 ? '+' : ''}{(analysis.droppedPlayer?.gain ?? 0).toLocaleString()} since being dropped
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : isAnalyzing ? (
                       <div className="mt-4 p-3 bg-gray-50 text-center text-gray-500 text-sm">

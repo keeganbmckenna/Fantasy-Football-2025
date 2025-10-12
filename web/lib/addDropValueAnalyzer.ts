@@ -21,8 +21,8 @@ export interface AddDropAnalysis {
   errorMessage?: string;
   addedPlayer: PlayerValueChange | null;
   droppedPlayer: PlayerValueChange | null;
-  netChange: number;
-  netChangePercentage: number;
+  decisionQuality: number; // Difference between added gain and dropped gain
+  decisionQualityPercentage: number;
   analyzedAt: Date;
 }
 
@@ -137,40 +137,40 @@ export async function analyzeAddDrop(
     );
   }
 
-  // Calculate net change
+  // Calculate decision quality: how well did your acquisition perform vs what you gave up?
   const addedGain = addedPlayer?.gain ?? 0;
   const droppedGain = droppedPlayer?.gain ?? 0;
-  const netChange = addedGain - droppedGain;
+  const decisionQuality = addedGain - droppedGain;
 
-  // Calculate net change percentage based on what was dropped
-  const droppedValue = droppedPlayer?.valueAtTransaction ?? 0;
-  const netChangePercentage = droppedValue > 0 ? (netChange / droppedValue) * 100 : 0;
+  // Calculate percentage relative to the absolute value gained/lost by what was dropped
+  const decisionQualityPercentage = droppedGain !== 0 ? (decisionQuality / Math.abs(droppedGain)) * 100 : 0;
 
   // Determine status
-  const hasAddedData = addedPlayer && addedPlayer.valueAtTransaction !== null && addedPlayer.valueToday !== null;
-  const hasDroppedData = droppedPlayer && droppedPlayer.valueAtTransaction !== null && droppedPlayer.valueToday !== null;
+  // For K/DST players (null values), we treat them as having data since we use 0 in calculations
+  const hasAddedPlayer = !!addedPlayer;
+  const hasDroppedPlayer = !!droppedPlayer;
 
   let status: 'success' | 'partial' | 'error';
   let errorMessage: string | undefined;
 
-  // For pure adds
-  if (!transaction.droppedPlayerId && hasAddedData) {
+  // For pure adds - success if we have a player object (even if K/DST with null values)
+  if (!transaction.droppedPlayerId && hasAddedPlayer) {
     status = 'success';
-  } else if (!transaction.droppedPlayerId && !hasAddedData) {
+  } else if (!transaction.droppedPlayerId && !hasAddedPlayer) {
     status = 'error';
     errorMessage = 'Could not retrieve player value';
   }
-  // For pure drops
-  else if (!transaction.playerId && hasDroppedData) {
+  // For pure drops - success if we have a player object (even if K/DST with null values)
+  else if (!transaction.playerId && hasDroppedPlayer) {
     status = 'success';
-  } else if (!transaction.playerId && !hasDroppedData) {
+  } else if (!transaction.playerId && !hasDroppedPlayer) {
     status = 'error';
     errorMessage = 'Could not retrieve player value';
   }
-  // For swaps
-  else if (hasAddedData && hasDroppedData) {
+  // For swaps - success if we have both player objects
+  else if (hasAddedPlayer && hasDroppedPlayer) {
     status = 'success';
-  } else if (hasAddedData || hasDroppedData) {
+  } else if (hasAddedPlayer || hasDroppedPlayer) {
     status = 'partial';
     errorMessage = 'Some player values could not be retrieved';
   } else {
@@ -184,8 +184,8 @@ export async function analyzeAddDrop(
     errorMessage,
     addedPlayer,
     droppedPlayer,
-    netChange,
-    netChangePercentage,
+    decisionQuality,
+    decisionQualityPercentage,
     analyzedAt: new Date(),
   };
 }

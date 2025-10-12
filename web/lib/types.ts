@@ -243,18 +243,30 @@ export interface TradeAnalysis {
   errorMessage?: string;
 
   team1: {
-    totalValueAtTrade: number;
-    totalValueToday: number;
-    totalGain: number;
-    gainPercentage: number;
+    gaveUpValueAtTrade: number;
+    gaveUpValueToday: number;
+    gaveUpGain: number;
+    gaveUpGainPercentage: number;
+    receivedValueAtTrade: number;
+    receivedValueToday: number;
+    receivedGain: number;
+    receivedGainPercentage: number;
+    tradeQuality: number; // receivedGain - gaveUpGain
+    tradeQualityPercentage: number;
     players: PlayerTradeValue[];
   };
 
   team2: {
-    totalValueAtTrade: number;
-    totalValueToday: number;
-    totalGain: number;
-    gainPercentage: number;
+    gaveUpValueAtTrade: number;
+    gaveUpValueToday: number;
+    gaveUpGain: number;
+    gaveUpGainPercentage: number;
+    receivedValueAtTrade: number;
+    receivedValueToday: number;
+    receivedGain: number;
+    receivedGainPercentage: number;
+    tradeQuality: number; // receivedGain - gaveUpGain
+    tradeQualityPercentage: number;
     players: PlayerTradeValue[];
   };
 

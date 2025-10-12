@@ -20,18 +20,30 @@ export interface TradeAnalysis {
   errorMessage?: string;
 
   team1: {
-    totalValueAtTrade: number;
-    totalValueToday: number;
-    totalGain: number;
-    gainPercentage: number;
+    gaveUpValueAtTrade: number;
+    gaveUpValueToday: number;
+    gaveUpGain: number;
+    gaveUpGainPercentage: number;
+    receivedValueAtTrade: number;
+    receivedValueToday: number;
+    receivedGain: number;
+    receivedGainPercentage: number;
+    tradeQuality: number; // receivedGain - gaveUpGain
+    tradeQualityPercentage: number;
     players: PlayerTradeValue[];
   };
 
   team2: {
-    totalValueAtTrade: number;
-    totalValueToday: number;
-    totalGain: number;
-    gainPercentage: number;
+    gaveUpValueAtTrade: number;
+    gaveUpValueToday: number;
+    gaveUpGain: number;
+    gaveUpGainPercentage: number;
+    receivedValueAtTrade: number;
+    receivedValueToday: number;
+    receivedGain: number;
+    receivedGainPercentage: number;
+    tradeQuality: number; // receivedGain - gaveUpGain
+    tradeQualityPercentage: number;
     players: PlayerTradeValue[];
   };
 
@@ -185,34 +197,34 @@ export async function analyzeTrade(
   );
 
   // Team 1 gave up team1Players and received team2Players
-  // So team 1's gain = (what they received today - what they gave up today) - (what they received at trade - what they gave up at trade)
-  // Simplified: gain = (received today - received at trade) - (gave today - gave at trade)
-  // Even more simplified: gain = (team2Today - team2AtTrade) - (team1Today - team1AtTrade)
+  // Trade quality = how well did what you received perform vs what you gave up?
 
-  const team1GainOnReceived = team2Today - team2AtTrade;
-  const team1GainOnGave = team1Today - team1AtTrade;
-  const team1NetGain = team1GainOnReceived - team1GainOnGave;
+  // Team 1 calculations
+  const team1GaveUpGain = team1Today - team1AtTrade;
+  const team1GaveUpGainPct = team1AtTrade > 0 ? (team1GaveUpGain / team1AtTrade) * 100 : 0;
+  const team1ReceivedGain = team2Today - team2AtTrade;
+  const team1ReceivedGainPct = team2AtTrade > 0 ? (team1ReceivedGain / team2AtTrade) * 100 : 0;
+  const team1TradeQuality = team1ReceivedGain - team1GaveUpGain;
+  const team1TradeQualityPct = team1GaveUpGain !== 0 ? (team1TradeQuality / Math.abs(team1GaveUpGain)) * 100 : 0;
 
-  const team2GainOnReceived = team1Today - team1AtTrade;
-  const team2GainOnGave = team2Today - team2AtTrade;
-  const team2NetGain = team2GainOnReceived - team2GainOnGave;
+  // Team 2 calculations
+  const team2GaveUpGain = team2Today - team2AtTrade;
+  const team2GaveUpGainPct = team2AtTrade > 0 ? (team2GaveUpGain / team2AtTrade) * 100 : 0;
+  const team2ReceivedGain = team1Today - team1AtTrade;
+  const team2ReceivedGainPct = team1AtTrade > 0 ? (team2ReceivedGain / team1AtTrade) * 100 : 0;
+  const team2TradeQuality = team2ReceivedGain - team2GaveUpGain;
+  const team2TradeQualityPct = team2GaveUpGain !== 0 ? (team2TradeQuality / Math.abs(team2GaveUpGain)) * 100 : 0;
 
-  // Calculate percentages
-  const team1GainPct =
-    team1AtTrade > 0 ? (team1NetGain / team1AtTrade) * 100 : 0;
-  const team2GainPct =
-    team2AtTrade > 0 ? (team2NetGain / team2AtTrade) * 100 : 0;
-
-  // Determine winner (5% threshold to call it "even")
+  // Determine winner based on trade quality (5% threshold to call it "even")
   let winner: 'team1' | 'team2' | 'even';
-  const gainDiff = Math.abs(team1NetGain - team2NetGain);
-  const avgValue = (team1AtTrade + team2AtTrade) / 2;
-  const diffPercentage = avgValue > 0 ? (gainDiff / avgValue) * 100 : 0;
+  const qualityDiff = Math.abs(team1TradeQuality - team2TradeQuality);
+  const avgGaveUpValue = (team1AtTrade + team2AtTrade) / 2;
+  const diffPercentage = avgGaveUpValue > 0 ? (qualityDiff / avgGaveUpValue) * 100 : 0;
 
   if (diffPercentage < 5) {
     winner = 'even';
   } else {
-    winner = team1NetGain > team2NetGain ? 'team1' : 'team2';
+    winner = team1TradeQuality > team2TradeQuality ? 'team1' : 'team2';
   }
 
   // Determine status
@@ -242,21 +254,33 @@ export async function analyzeTrade(
     status,
     errorMessage,
     team1: {
-      totalValueAtTrade: team1AtTrade,
-      totalValueToday: team1Today,
-      totalGain: team1NetGain,
-      gainPercentage: team1GainPct,
+      gaveUpValueAtTrade: team1AtTrade,
+      gaveUpValueToday: team1Today,
+      gaveUpGain: team1GaveUpGain,
+      gaveUpGainPercentage: team1GaveUpGainPct,
+      receivedValueAtTrade: team2AtTrade,
+      receivedValueToday: team2Today,
+      receivedGain: team1ReceivedGain,
+      receivedGainPercentage: team1ReceivedGainPct,
+      tradeQuality: team1TradeQuality,
+      tradeQualityPercentage: team1TradeQualityPct,
       players: team1Players,
     },
     team2: {
-      totalValueAtTrade: team2AtTrade,
-      totalValueToday: team2Today,
-      totalGain: team2NetGain,
-      gainPercentage: team2GainPct,
+      gaveUpValueAtTrade: team2AtTrade,
+      gaveUpValueToday: team2Today,
+      gaveUpGain: team2GaveUpGain,
+      gaveUpGainPercentage: team2GaveUpGainPct,
+      receivedValueAtTrade: team1AtTrade,
+      receivedValueToday: team1Today,
+      receivedGain: team2ReceivedGain,
+      receivedGainPercentage: team2ReceivedGainPct,
+      tradeQuality: team2TradeQuality,
+      tradeQualityPercentage: team2TradeQualityPct,
       players: team2Players,
     },
     winner,
-    winMargin: Math.abs(team1NetGain - team2NetGain),
+    winMargin: Math.abs(team1TradeQuality - team2TradeQuality),
     analyzedAt: new Date(),
   };
 }
