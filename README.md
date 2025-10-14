@@ -110,7 +110,7 @@ To use with a different Sleeper league:
 
 ## Deployment
 
-### Deploy to Vercel
+### Deploy to Netlify
 
 1. Push your code to GitHub
 
