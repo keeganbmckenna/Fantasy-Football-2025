@@ -1,3 +1,5 @@
+import { CACHE_CONFIG, RETRY_CONFIG } from './config';
+
 // Simple in-memory cache for FantasyCalc API responses
 interface CachedData {
   data: unknown;
@@ -5,12 +7,6 @@ interface CachedData {
 }
 
 const cache = new Map<string, CachedData>();
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-const PLAYER_LIST_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours for player list
-
-// Retry configuration
-const MAX_RETRIES = 4;
-const INITIAL_RETRY_DELAY = 100; // 100ms
 
 /**
  * Sleep helper for retry delays
@@ -24,8 +20,8 @@ async function sleep(ms: number): Promise<void> {
  */
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
-  retries: number = MAX_RETRIES,
-  delay: number = INITIAL_RETRY_DELAY,
+  retries: number = RETRY_CONFIG.maxRetries,
+  delay: number = RETRY_CONFIG.initialDelay,
   attempt: number = 1
 ): Promise<T> {
   try {
@@ -74,7 +70,7 @@ export async function getHistoricalValues(
 
   // Check cache first - but only use it if it has actual data
   const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  if (cached && Date.now() - cached.timestamp < CACHE_CONFIG.playerData) {
     // Only return cached data if it's not empty
     if (Array.isArray(cached.data) && cached.data.length > 0) {
       return cached.data as HistoricalValue[];
@@ -219,7 +215,7 @@ async function fetchAllPlayers(): Promise<FantasyCalcPlayer[]> {
 
   // Check cache first - only use if it has data
   const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < PLAYER_LIST_CACHE_DURATION) {
+  if (cached && Date.now() - cached.timestamp < CACHE_CONFIG.playerData) {
     if (Array.isArray(cached.data) && cached.data.length > 0) {
       console.log(`✓ Using cached player list (${cached.data.length} players)`);
       return cached.data as FantasyCalcPlayer[];

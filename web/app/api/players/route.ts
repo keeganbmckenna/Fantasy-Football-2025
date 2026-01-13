@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CACHE_CONFIG } from '@/lib/config';
 
 interface SleeperPlayer {
   player_id?: string;
@@ -12,14 +13,13 @@ interface SleeperPlayer {
 let cachedPlayerMap: Record<string, string> | null = null;
 let cachedPlayerPositions: Record<string, string> | null = null;
 let lastFetchTime: number = 0;
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 export async function GET() {
   try {
     const now = Date.now();
 
-    // Return cached data if it's less than 24 hours old
-    if (cachedPlayerMap && cachedPlayerPositions && (now - lastFetchTime) < CACHE_DURATION) {
+    // Return cached data if it's less than configured duration
+    if (cachedPlayerMap && cachedPlayerPositions && (now - lastFetchTime) < CACHE_CONFIG.playerData) {
       return NextResponse.json({
         players: cachedPlayerMap,
         positions: cachedPlayerPositions

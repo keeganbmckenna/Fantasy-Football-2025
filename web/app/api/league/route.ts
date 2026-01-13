@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { SLEEPER_CONFIG } from '@/lib/config';
+import { SLEEPER_CONFIG, CACHE_CONFIG } from '@/lib/config';
 import type { SleeperUser, SleeperRoster, SleeperMatchup } from '@/lib/types';
 
 export async function GET() {
   try {
     const { leagueId, baseUrl, maxWeeks } = SLEEPER_CONFIG;
 
-    // Fetch all data in parallel with 5 minute cache
+    // Fetch all data in parallel with configured cache
     const [leagueRes, usersRes, rostersRes] = await Promise.all([
-      fetch(`${baseUrl}/league/${leagueId}`, { next: { revalidate: 300 } }),
-      fetch(`${baseUrl}/league/${leagueId}/users`, { next: { revalidate: 300 } }),
-      fetch(`${baseUrl}/league/${leagueId}/rosters`, { next: { revalidate: 300 } }),
+      fetch(`${baseUrl}/league/${leagueId}`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
+      fetch(`${baseUrl}/league/${leagueId}/users`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
+      fetch(`${baseUrl}/league/${leagueId}/rosters`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
     ]);
 
     const league = await leagueRes.json();
@@ -29,7 +29,7 @@ export async function GET() {
       const isCurrentWeek = week === currentWeek && week > lastScoredWeek;
       matchupPromises.push(
         fetch(`${baseUrl}/league/${leagueId}/matchups/${week}`, {
-          next: { revalidate: isCurrentWeek ? 0 : 86400 }
+          next: { revalidate: isCurrentWeek ? CACHE_CONFIG.currentWeek : CACHE_CONFIG.completedWeek }
         }).then(res => res.json())
       );
     }

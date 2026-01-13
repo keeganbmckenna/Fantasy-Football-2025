@@ -1,56 +1,10 @@
-import type { TradeInfo } from './types';
+import type { TradeInfo, PlayerTradeValue, TradeAnalysis } from './types';
 import {
   getHistoricalValues,
   getValueAtDate,
   getCurrentValue,
   getFantasyCalcId,
 } from './fantasycalc-api';
-
-export interface PlayerTradeValue {
-  playerName: string;
-  valueAtTrade: number | null;
-  valueToday: number | null;
-  gain: number | null;
-  gainPercentage: number | null;
-}
-
-export interface TradeAnalysis {
-  tradeId: string;
-  status: 'success' | 'partial' | 'error';
-  errorMessage?: string;
-
-  team1: {
-    gaveUpValueAtTrade: number;
-    gaveUpValueToday: number;
-    gaveUpGain: number;
-    gaveUpGainPercentage: number;
-    receivedValueAtTrade: number;
-    receivedValueToday: number;
-    receivedGain: number;
-    receivedGainPercentage: number;
-    tradeQuality: number; // receivedGain - gaveUpGain
-    tradeQualityPercentage: number;
-    players: PlayerTradeValue[];
-  };
-
-  team2: {
-    gaveUpValueAtTrade: number;
-    gaveUpValueToday: number;
-    gaveUpGain: number;
-    gaveUpGainPercentage: number;
-    receivedValueAtTrade: number;
-    receivedValueToday: number;
-    receivedGain: number;
-    receivedGainPercentage: number;
-    tradeQuality: number; // receivedGain - gaveUpGain
-    tradeQualityPercentage: number;
-    players: PlayerTradeValue[];
-  };
-
-  winner: 'team1' | 'team2' | 'even';
-  winMargin: number; // Absolute value difference
-  analyzedAt: Date;
-}
 
 /**
  * Extract player data from trade items (skip FAAB, kickers, and defenses)

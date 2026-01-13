@@ -1,24 +1,24 @@
 import { NextResponse } from 'next/server';
-import { SLEEPER_CONFIG } from '@/lib/config';
+import { SLEEPER_CONFIG, CACHE_CONFIG } from '@/lib/config';
 import type { SleeperTransaction } from '@/lib/types';
 
 export async function GET() {
   try {
     const { leagueId, baseUrl, maxWeeks } = SLEEPER_CONFIG;
 
-    // Fetch league info to get current week (30 minute cache)
+    // Fetch league info to get current week
     const leagueRes = await fetch(`${baseUrl}/league/${leagueId}`, {
-      next: { revalidate: 1800 }
+      next: { revalidate: CACHE_CONFIG.transactionData }
     });
     const league = await leagueRes.json();
     const currentWeek = league.settings?.leg || 14;
 
-    // Fetch transactions for all weeks (30 minute cache)
+    // Fetch transactions for all weeks
     const transactionPromises = [];
     for (let week = 1; week <= Math.min(currentWeek, maxWeeks); week++) {
       transactionPromises.push(
         fetch(`${baseUrl}/league/${leagueId}/transactions/${week}`, {
-          next: { revalidate: 1800 }
+          next: { revalidate: CACHE_CONFIG.transactionData }
         })
           .then(res => res.json())
           .then(data => ({ week, transactions: data as SleeperTransaction[] }))
