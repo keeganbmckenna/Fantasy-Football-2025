@@ -36,7 +36,7 @@ export default function SectionCard({
   const gradientClass = GRADIENT_STYLES[gradientType];
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="bg-[var(--surface-elevated)] rounded-lg shadow-lg overflow-hidden border border-[var(--border)]">
       {/* Header */}
       <div className={`bg-gradient-to-r ${gradientClass} px-6 py-4`}>
         <h2 className="text-2xl font-bold text-white">{title}</h2>
@@ -48,7 +48,7 @@ export default function SectionCard({
 
       {/* Footer */}
       {footer && (
-        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+        <div className="px-6 py-3 bg-[var(--surface)] border-t border-[var(--border)] text-[var(--muted)]">
           {footer}
         </div>
       )}

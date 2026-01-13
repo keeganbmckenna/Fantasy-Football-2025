@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TeamStats } from '@/lib/types';
-import { CHART_CONFIG } from '@/lib/constants';
+import { CHART_CONFIG, CHART_THEME } from '@/lib/constants';
 import { useChartHover } from '@/hooks/useChartHover';
 import { useTeamColors } from '@/hooks/useTeamColors';
 import CustomTooltip from './CustomTooltip';
@@ -12,15 +12,17 @@ import SectionCard from './ui/SectionCard';
 interface CumulativeScoresProps {
   cumulativeData: Record<string, number[]>;
   teams: TeamStats[];
+  maxWeek?: number;
 }
 
-export default function CumulativeScores({ cumulativeData, teams }: CumulativeScoresProps) {
+export default function CumulativeScores({ cumulativeData, teams, maxWeek }: CumulativeScoresProps) {
   const { setHoveredItem, clearHovered, isHovered, isOtherHovered } = useChartHover<string>();
   const teamColors = useTeamColors(teams, Object.keys(cumulativeData));
 
   // Transform data for recharts - memoized for performance
   const chartData = useMemo(() => {
-    const numWeeks = teams[0]?.weeklyScores.length || 0;
+    const totalWeeks = teams[0]?.weeklyScores.length || 0;
+    const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, totalWeeks) : totalWeeks;
     const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
 
     return weeks.map((week, index) => {
@@ -30,7 +32,7 @@ export default function CumulativeScores({ cumulativeData, teams }: CumulativeSc
       });
       return weekData;
     });
-  }, [cumulativeData, teams]);
+  }, [cumulativeData, teams, maxWeek]);
 
   return (
     <SectionCard
@@ -41,9 +43,19 @@ export default function CumulativeScores({ cumulativeData, teams }: CumulativeSc
       <div className="p-6">
         <ResponsiveContainer width="100%" height={CHART_CONFIG.defaultHeight}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="week" />
-            <YAxis label={{ value: 'Total Points', angle: -90, position: 'insideLeft' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
+            <XAxis
+              dataKey="week"
+              tick={{ fill: CHART_THEME.tick }}
+              axisLine={{ stroke: CHART_THEME.axis }}
+              tickLine={{ stroke: CHART_THEME.axis }}
+            />
+            <YAxis
+              label={{ value: 'Total Points', angle: -90, position: 'insideLeft', fill: CHART_THEME.tick }}
+              tick={{ fill: CHART_THEME.tick }}
+              axisLine={{ stroke: CHART_THEME.axis }}
+              tickLine={{ stroke: CHART_THEME.axis }}
+            />
             <Tooltip
               content={
                 <CustomTooltip
@@ -56,6 +68,7 @@ export default function CumulativeScores({ cumulativeData, teams }: CumulativeSc
             <Legend
               onMouseEnter={(e) => setHoveredItem(e.dataKey as string)}
               onMouseLeave={clearHovered}
+              wrapperStyle={{ color: CHART_THEME.legend }}
             />
             {Object.keys(cumulativeData).map((username, index) => {
               const team = teams.find(t => t.username === username);

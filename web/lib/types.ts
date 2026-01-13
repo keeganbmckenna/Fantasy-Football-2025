@@ -50,7 +50,15 @@ export interface SleeperLeague {
     last_scored_leg?: number;
     divisions?: number;
     playoff_teams?: number;
+    playoff_week_start?: number;
+    playoff_type?: number;
+    playoff_seed_type?: number;
+    playoff_round_type?: number;
+    start_week?: number;
+    num_teams?: number;
   };
+  bracket_id?: string | null;
+  loser_bracket_id?: string | null;
 }
 
 export interface LeagueData {
@@ -125,11 +133,31 @@ export interface PlayEveryoneStats {
   difference: number;
 }
 
+export interface ScheduleSimulationOutcome {
+  wins: number;
+  count: number;
+  frequency: number;
+}
+
+export interface ScheduleLuckDistribution {
+  username: string;
+  teamName: string;
+  actualWins: number;
+  outcomes: ScheduleSimulationOutcome[];
+}
+
+export interface ScheduleLuckSimulation {
+  simulations: number;
+  weeksSimulated: number;
+  teams: ScheduleLuckDistribution[];
+}
+
 export interface WeeklyPlayAllRecord {
   week: number;
   wins: number;
   losses: number;
   winPct: number;
+  actualResult?: 'W' | 'L' | 'T' | null;
 }
 
 export interface WeeklyPlayAllStats {
@@ -153,6 +181,18 @@ export interface WildCardStanding {
   rank: number;
   gamesOut: number;
   isIn: boolean;
+}
+
+export interface LeagueSettings {
+  regularSeasonStart: number;
+  regularSeasonEnd: number;
+  playoffStart: number;
+  totalTeams: number;
+  playoffTeams: number;
+  divisions: number;
+  hasToiletBowl: boolean;
+  playoffDescription: string;
+  toiletBowlDescription: string;
 }
 
 // Transaction Types

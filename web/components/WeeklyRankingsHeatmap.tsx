@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { TeamStats } from '@/lib/types';
-import { getRankingColor } from '@/lib/constants';
+import { getRankingColor, VIRIDIS_HEATMAP_COLORS } from '@/lib/constants';
 import SectionCard from './ui/SectionCard';
 
 interface WeeklyRankingsHeatmapProps {
@@ -35,24 +35,14 @@ export default function WeeklyRankingsHeatmap({ rankingsData, teams, maxWeek }: 
   }, [teams, rankingsData, numWeeks]);
 
   const legend = (
-    <div className="flex items-center gap-4 text-xs text-gray-600">
+    <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
       <span className="font-medium">Legend:</span>
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-green-500 rounded"></div>
-        <span>Top 25%</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-green-300 rounded"></div>
-        <span>Top 50%</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-yellow-300 rounded"></div>
-        <span>Bottom 50%</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-red-400 rounded"></div>
-        <span>Bottom 25%</span>
-      </div>
+      <span>Best</span>
+      <div
+        className="w-28 h-3 rounded"
+        style={{ backgroundImage: `linear-gradient(90deg, ${VIRIDIS_HEATMAP_COLORS.join(', ')})` }}
+      ></div>
+      <span>Worst</span>
     </div>
   );
 
@@ -64,52 +54,53 @@ export default function WeeklyRankingsHeatmap({ rankingsData, teams, maxWeek }: 
       footer={legend}
     >
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-[var(--border)]">
+          <thead className="bg-[var(--surface)]">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider sticky left-0 bg-[var(--surface)] z-10">
                 Team
               </th>
               {weeks.map((week) => (
                 <th
                   key={week}
-                  className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-3 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider"
                 >
                   W{week}
                 </th>
               ))}
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--surface)]">
                 Avg
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--surface)]">
                 Med
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-[var(--surface-elevated)] divide-y divide-[var(--border)]">
             {stats.map((team) => {
               const rankings = rankingsData[team.username] || [];
               return (
                 <tr key={team.username}>
-                  <td className="px-6 py-3 whitespace-nowrap sticky left-0 bg-white z-10 border-r border-gray-200">
-                    <div className="text-sm font-medium text-gray-900">{team.teamName}</div>
-                    <div className="text-xs text-gray-500">@{team.username}</div>
+                  <td className="px-6 py-3 whitespace-nowrap sticky left-0 bg-[var(--surface-elevated)] z-10 border-r border-[var(--border)]">
+                    <div className="text-sm font-medium text-[var(--foreground)]">{team.teamName}</div>
+                    <div className="text-xs text-[var(--muted)]">@{team.username}</div>
                   </td>
-                  {rankings.slice(0, numWeeks).map((ranking, index) => (
-                    <td
-                      key={index}
-                      className={`px-3 py-3 whitespace-nowrap text-center text-sm font-semibold ${getRankingColor(
-                        ranking,
-                        teams.length
-                      )}`}
-                    >
-                      {ranking}
-                    </td>
-                  ))}
-                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-bold bg-gray-50 text-gray-900">
+                  {rankings.slice(0, numWeeks).map((ranking, index) => {
+                    const { backgroundColor, textColor } = getRankingColor(ranking, teams.length);
+                    return (
+                      <td
+                        key={index}
+                        className="px-3 py-3 whitespace-nowrap text-center text-sm font-semibold"
+                        style={{ backgroundColor, color: textColor }}
+                      >
+                        {ranking}
+                      </td>
+                    );
+                  })}
+                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-bold bg-[var(--surface)] text-[var(--foreground)]">
                     {team.avgRanking}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-bold bg-gray-50 text-gray-900">
+                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-bold bg-[var(--surface)] text-[var(--foreground)]">
                     {team.medRanking}
                   </td>
                 </tr>

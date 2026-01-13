@@ -41,10 +41,10 @@ export default function CustomTooltip({
 
   return (
     <div
-      className="bg-white border-2 border-gray-300 rounded-lg shadow-lg p-4 min-w-[250px] max-w-[300px]"
+      className="bg-[var(--chart-tooltip-bg)] border-2 border-[var(--chart-tooltip-border)] rounded-lg shadow-lg p-4 min-w-[250px] max-w-[300px]"
       style={{ zIndex: 9999, position: 'relative', maxHeight: '500px', display: 'flex', flexDirection: 'column' }}
     >
-      <p className="font-bold text-gray-800 mb-3 text-center border-b pb-2 flex-shrink-0">
+      <p className="font-bold text-[var(--chart-tooltip-text)] mb-3 text-center border-b border-[var(--chart-tooltip-border)] pb-2 flex-shrink-0">
         {label}
       </p>
       <div className="space-y-1 overflow-y-auto flex-1" style={{ overflowY: 'auto' }}>
@@ -55,18 +55,18 @@ export default function CustomTooltip({
           return (
             <div
               key={item.username}
-              className="flex items-center justify-between gap-3 py-1 px-2 rounded hover:bg-gray-50"
+              className="flex items-center justify-between gap-3 py-1 px-2 rounded hover:bg-[var(--surface)]"
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-sm text-gray-700 truncate" title={teamName}>
+                <span className="text-sm text-[var(--chart-tooltip-muted)] truncate" title={teamName}>
                   {teamName}
                 </span>
               </div>
-              <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
+              <span className="text-sm font-semibold text-[var(--chart-tooltip-text)] flex-shrink-0">
                 {valueFormatter(item.value)}
               </span>
             </div>

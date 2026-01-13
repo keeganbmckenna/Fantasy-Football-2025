@@ -1,6 +1,7 @@
 'use client';
 
 import { TeamStats } from '@/lib/types';
+import SectionCard from '@/components/ui/SectionCard';
 
 interface WeeklyScoresProps {
   teams: TeamStats[];
@@ -14,53 +15,50 @@ export default function WeeklyScores({ teams, maxWeek }: WeeklyScoresProps) {
   const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 px-6 py-4">
-        <h2 className="text-2xl font-bold text-white">Weekly Scores</h2>
-      </div>
+    <SectionCard title="Weekly Scores" gradientType="secondary">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-[var(--border)]">
+          <thead className="bg-[var(--surface)]">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider sticky left-0 bg-[var(--surface)] z-10">
                 Team
               </th>
               {weeks.map((week) => (
                 <th
                   key={week}
-                  className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-4 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider"
                 >
                   W{week}
                 </th>
               ))}
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
+              <th className="px-6 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--surface)]">
                 Total
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
+              <th className="px-6 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--surface)]">
                 Avg
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--success-bg)]">
                 Win Avg
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--success-bg)]">
                 Win Margin
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-red-50">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--danger-bg)]">
                 Loss Avg
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-red-50">
+              <th className="px-4 py-3 text-center text-xs font-medium text-[var(--muted)] uppercase tracking-wider bg-[var(--danger-bg)]">
                 Loss Margin
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-[var(--surface-elevated)] divide-y divide-[var(--border)]">
             {teams.map((team) => (
               <tr key={team.username}>
-                <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white z-10">
-                  <div className="text-sm font-medium text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-[var(--surface-elevated)] z-10">
+                  <div className="text-sm font-medium text-[var(--foreground)]">
                     {team.teamName}
                   </div>
-                  <div className="text-xs text-gray-500">@{team.username}</div>
+                  <div className="text-xs text-[var(--muted)]">@{team.username}</div>
                 </td>
                 {team.weeklyScores.slice(0, numWeeks).map((score, index) => {
                   const result = team.weeklyResults[index];
@@ -73,63 +71,67 @@ export default function WeeklyScores({ teams, maxWeek }: WeeklyScoresProps) {
                       key={index}
                       className={`px-4 py-2 whitespace-nowrap text-center ${
                         result === 'W'
-                          ? 'bg-green-50 text-green-800'
+                          ? 'bg-[var(--success-bg)] text-[var(--success-text)]'
                           : result === 'L'
-                          ? 'bg-red-50 text-red-800'
-                          : 'bg-yellow-50 text-yellow-800'
+                          ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
+                          : 'bg-[var(--warning-bg)] text-[var(--warning-text)]'
                       }`}
                     >
                       <div className="text-sm font-semibold">{score.toFixed(2)}</div>
                       <div className={`text-xs font-medium ${
-                        result === 'W' ? 'text-green-600' : result === 'L' ? 'text-red-600' : 'text-gray-600'
+                        result === 'W'
+                          ? 'text-[var(--success-text)]'
+                          : result === 'L'
+                          ? 'text-[var(--danger-text)]'
+                          : 'text-[var(--muted)]'
                       }`}>
                         {marginText}
                       </div>
                     </td>
                   );
                 })}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold bg-gray-50 text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold bg-[var(--surface)] text-[var(--foreground)]">
                   {team.totalPoints.toFixed(2)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold bg-gray-50 text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold bg-[var(--surface)] text-[var(--foreground)]">
                   {team.avgPoints.toFixed(2)}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-center bg-green-50 text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-center bg-[var(--success-bg)] text-[var(--foreground)]">
                   {team.avgPointsInWins !== undefined ? (
                     <>
                       <div className="text-sm font-semibold">{team.avgPointsInWins.toFixed(2)}</div>
                       {team.medianPointsInWins !== undefined && (
-                        <div className="text-xs text-gray-600">Med: {team.medianPointsInWins.toFixed(2)}</div>
+                        <div className="text-xs text-[var(--muted)]">Med: {team.medianPointsInWins.toFixed(2)}</div>
                       )}
                     </>
                   ) : '—'}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-center bg-green-50">
+                <td className="px-4 py-2 whitespace-nowrap text-center bg-[var(--success-bg)]">
                   {team.avgWinMargin !== undefined ? (
                     <>
-                      <div className="text-sm font-semibold text-green-700">+{team.avgWinMargin.toFixed(2)}</div>
+                      <div className="text-sm font-semibold text-[var(--success-text)]">+{team.avgWinMargin.toFixed(2)}</div>
                       {team.medianWinMargin !== undefined && (
-                        <div className="text-xs text-green-600">Med: +{team.medianWinMargin.toFixed(2)}</div>
+                        <div className="text-xs text-[var(--muted)]">Med: +{team.medianWinMargin.toFixed(2)}</div>
                       )}
                     </>
                   ) : '—'}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-center bg-red-50 text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-center bg-[var(--danger-bg)] text-[var(--foreground)]">
                   {team.avgPointsInLosses !== undefined ? (
                     <>
                       <div className="text-sm font-semibold">{team.avgPointsInLosses.toFixed(2)}</div>
                       {team.medianPointsInLosses !== undefined && (
-                        <div className="text-xs text-gray-600">Med: {team.medianPointsInLosses.toFixed(2)}</div>
+                        <div className="text-xs text-[var(--muted)]">Med: {team.medianPointsInLosses.toFixed(2)}</div>
                       )}
                     </>
                   ) : '—'}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-center bg-red-50">
+                <td className="px-4 py-2 whitespace-nowrap text-center bg-[var(--danger-bg)]">
                   {team.avgLossMargin !== undefined ? (
                     <>
-                      <div className="text-sm font-semibold text-red-700">{team.avgLossMargin.toFixed(2)}</div>
+                      <div className="text-sm font-semibold text-[var(--danger-text)]">{team.avgLossMargin.toFixed(2)}</div>
                       {team.medianLossMargin !== undefined && (
-                        <div className="text-xs text-red-600">Med: {team.medianLossMargin.toFixed(2)}</div>
+                        <div className="text-xs text-[var(--muted)]">Med: {team.medianLossMargin.toFixed(2)}</div>
                       )}
                     </>
                   ) : '—'}
@@ -139,6 +141,6 @@ export default function WeeklyScores({ teams, maxWeek }: WeeklyScoresProps) {
           </tbody>
         </table>
       </div>
-    </div>
+    </SectionCard>
   );
 }

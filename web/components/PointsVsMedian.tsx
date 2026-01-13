@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TeamStats } from '@/lib/types';
-import { CHART_CONFIG } from '@/lib/constants';
+import { CHART_CONFIG, CHART_THEME } from '@/lib/constants';
 import { useChartHover } from '@/hooks/useChartHover';
 import { useTeamColors } from '@/hooks/useTeamColors';
 import CustomTooltip from './CustomTooltip';
@@ -12,17 +12,19 @@ import SectionCard from './ui/SectionCard';
 interface PointsVsMedianProps {
   differenceData: Record<string, number[]>;
   teams: TeamStats[];
+  maxWeek?: number;
 }
 
-const MEDIAN_COLOR = '#1f2937';
+const MEDIAN_COLOR = CHART_THEME.median;
 
-export default function PointsVsMedian({ differenceData, teams }: PointsVsMedianProps) {
+export default function PointsVsMedian({ differenceData, teams, maxWeek }: PointsVsMedianProps) {
   const { setHoveredItem, clearHovered, isHovered, isOtherHovered } = useChartHover<string>();
   const teamColors = useTeamColors(teams, Object.keys(differenceData));
 
   // Transform data for recharts - memoized for performance
   const chartData = useMemo(() => {
-    const numWeeks = teams[0]?.weeklyScores.length || 0;
+    const totalWeeks = teams[0]?.weeklyScores.length || 0;
+    const numWeeks = maxWeek !== undefined ? Math.min(maxWeek, totalWeeks) : totalWeeks;
     const weeks = Array.from({ length: numWeeks }, (_, i) => i + 1);
 
     return weeks.map((week, index) => {
@@ -35,7 +37,7 @@ export default function PointsVsMedian({ differenceData, teams }: PointsVsMedian
       });
       return weekData;
     });
-  }, [differenceData, teams]);
+  }, [differenceData, teams, maxWeek]);
 
   // Prepare team data with colors for tooltip (including median)
   const teamColorsWithMedian = useMemo(
@@ -55,9 +57,19 @@ export default function PointsVsMedian({ differenceData, teams }: PointsVsMedian
       <div className="p-6">
         <ResponsiveContainer width="100%" height={CHART_CONFIG.defaultHeight}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="week" />
-            <YAxis label={{ value: 'Points Above/Below Median', angle: -90, position: 'insideLeft' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
+            <XAxis
+              dataKey="week"
+              tick={{ fill: CHART_THEME.tick }}
+              axisLine={{ stroke: CHART_THEME.axis }}
+              tickLine={{ stroke: CHART_THEME.axis }}
+            />
+            <YAxis
+              label={{ value: 'Points Above/Below Median', angle: -90, position: 'insideLeft', fill: CHART_THEME.tick }}
+              tick={{ fill: CHART_THEME.tick }}
+              axisLine={{ stroke: CHART_THEME.axis }}
+              tickLine={{ stroke: CHART_THEME.axis }}
+            />
             <Tooltip
               content={
                 <CustomTooltip
@@ -70,6 +82,7 @@ export default function PointsVsMedian({ differenceData, teams }: PointsVsMedian
             <Legend
               onMouseEnter={(e) => setHoveredItem(e.dataKey as string)}
               onMouseLeave={clearHovered}
+              wrapperStyle={{ color: CHART_THEME.legend }}
             />
             {/* Median line - bold and always visible */}
             <Line

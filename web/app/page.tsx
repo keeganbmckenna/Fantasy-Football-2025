@@ -10,9 +10,13 @@ import CumulativeScores from '@/components/CumulativeScores';
 import PointsVsMedian from '@/components/PointsVsMedian';
 import WeeklyRankingsHeatmap from '@/components/WeeklyRankingsHeatmap';
 import PlayEveryoneAnalysis from '@/components/PlayEveryoneAnalysis';
+import ScheduleLuckDistribution from '@/components/ScheduleLuckDistribution';
 import WeeklyPlayAll from '@/components/WeeklyPlayAll';
 import AllTransactions from '@/components/AllTransactions';
-import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding, SleeperTransaction, ProcessedTransaction } from '@/lib/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding, SleeperTransaction, ProcessedTransaction, ScheduleLuckSimulation } from '@/lib/types';
 import {
   calculateTeamStats,
   getWeeklyMatchups,
@@ -24,7 +28,9 @@ import {
   calculateWeeklyPlayAll,
   calculateDivisionStandings,
   calculateWildCardStandings,
+  simulateScheduleLuck,
 } from '@/lib/analyze';
+import { getLeagueSettings } from '@/lib/leagueSettings';
 import {
   processTransactions,
   extractTrades,
@@ -47,8 +53,13 @@ export default function Home() {
   const [weeklyRankings, setWeeklyRankings] = useState<Record<string, number[]>>({});
   const [playEveryoneData, setPlayEveryoneData] = useState<PlayEveryoneStats[]>([]);
   const [weeklyPlayAllData, setWeeklyPlayAllData] = useState<WeeklyPlayAllStats[]>([]);
+  const [scheduleLuckSimulation, setScheduleLuckSimulation] = useState<ScheduleLuckSimulation | null>(null);
   const [divisions, setDivisions] = useState<DivisionStanding[]>([]);
   const [wildCard, setWildCard] = useState<WildCardStanding[]>([]);
+
+  const regularSeasonWeekCap = leagueData
+    ? Math.min(leagueData.lastScoredWeek, getLeagueSettings(leagueData.league).regularSeasonEnd)
+    : undefined;
 
   // Transaction data
   const [allTransactions, setAllTransactions] = useState<ProcessedTransaction[]>([]);
@@ -69,19 +80,25 @@ export default function Home() {
         const stats = calculateTeamStats(data, data.lastScoredWeek);
         setTeamStats(stats);
 
+        const leagueSettings = getLeagueSettings(data.league);
+        const regularSeasonWeekCap = Math.min(
+          data.lastScoredWeek,
+          leagueSettings.regularSeasonEnd
+        );
+
         // Get matchups
         const weeklyMatchups = getWeeklyMatchups(data);
         setMatchups(weeklyMatchups);
 
         // Calculate additional analytics
-        // Only count completed weeks for standings, rankings and play-everyone analysis
-        setStandingsOverTime(calculateStandingsOverTime(stats, data.lastScoredWeek));
-        // Keep cumulative scores and median difference updating in real-time
-        setCumulativeScores(calculateCumulativeScores(stats));
-        setDifferenceFromMedian(calculateDifferenceFromMedian(stats));
-        setWeeklyRankings(calculateWeeklyRankings(stats, data.lastScoredWeek));
-        setPlayEveryoneData(calculatePlayEveryoneStats(stats, data.lastScoredWeek));
-        setWeeklyPlayAllData(calculateWeeklyPlayAll(stats, data.lastScoredWeek));
+        // Only count completed regular-season weeks for weekly analytics
+        setStandingsOverTime(calculateStandingsOverTime(stats, regularSeasonWeekCap));
+        setCumulativeScores(calculateCumulativeScores(stats, regularSeasonWeekCap));
+        setDifferenceFromMedian(calculateDifferenceFromMedian(stats, regularSeasonWeekCap));
+        setWeeklyRankings(calculateWeeklyRankings(stats, regularSeasonWeekCap));
+        setPlayEveryoneData(calculatePlayEveryoneStats(stats, regularSeasonWeekCap));
+        setWeeklyPlayAllData(calculateWeeklyPlayAll(stats, regularSeasonWeekCap));
+        setScheduleLuckSimulation(simulateScheduleLuck(stats, 20000, regularSeasonWeekCap));
 
         // Calculate division standings and wild card race
         const divisionStandings = calculateDivisionStandings(stats);
@@ -140,22 +157,15 @@ export default function Home() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-lg">Loading league data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading league data..." />;
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md">
-          <h2 className="text-red-800 text-xl font-bold mb-2">Error</h2>
-          <p className="text-red-600">{error}</p>
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <div className="bg-[var(--surface-elevated)] border border-[var(--danger-text)]/40 rounded-lg p-8 max-w-md">
+          <h2 className="text-[var(--danger-text)] text-xl font-bold mb-2">Error</h2>
+          <p className="text-[var(--muted)]">{error}</p>
         </div>
       </div>
     );
@@ -170,33 +180,36 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Header */}
-      <header className="bg-white shadow-md">
+      <header className="bg-[var(--surface-elevated)] shadow-md border-b border-[var(--border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-4">
-              {leagueData?.league?.avatar && (
-                <Image
-                  src={`https://sleepercdn.com/avatars/${leagueData.league.avatar}`}
-                  alt="League Avatar"
-                  width={64}
-                  height={64}
-                  className="rounded-full"
-                />
-              )}
-              <h1 className="text-4xl font-bold text-gray-900">
-                {leagueData?.league?.name || 'Fantasy Football'}
-              </h1>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center justify-center gap-4">
+                {leagueData?.league?.avatar && (
+                  <Image
+                    src={`https://sleepercdn.com/avatars/${leagueData.league.avatar}`}
+                    alt="League Avatar"
+                    width={64}
+                    height={64}
+                    className="rounded-full"
+                  />
+                )}
+                <h1 className="text-4xl font-bold text-[var(--foreground)]">
+                  {leagueData?.league?.name || 'Fantasy Football'}
+                </h1>
+              </div>
+              <ThemeToggle />
             </div>
-            <p className="mt-2 text-lg text-gray-600">
+            <p className="mt-2 text-lg text-[var(--muted)]">
               Season {leagueData?.league?.season || '2025'}
             </p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-[var(--border)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Desktop Navigation */}
             <nav className="-mb-px hidden md:flex space-x-8" aria-label="Tabs">
@@ -206,8 +219,8 @@ export default function Home() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-[var(--accent)] text-[var(--accent)]'
+                      : 'border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:border-[var(--border)]'
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
                 >
                   <span className="mr-2">{tab.icon}</span>
@@ -223,12 +236,12 @@ export default function Home() {
                 className="flex items-center justify-between w-full py-4 text-left"
                 aria-expanded={mobileMenuOpen}
               >
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-[var(--foreground)]">
                   <span className="mr-2">{tabs.find(t => t.id === activeTab)?.icon}</span>
                   {tabs.find(t => t.id === activeTab)?.name}
                 </span>
                 <svg
-                  className={`h-5 w-5 text-gray-500 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
+                  className={`h-5 w-5 text-[var(--muted)] transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -248,8 +261,8 @@ export default function Home() {
                       }}
                       className={`${
                         activeTab === tab.id
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                          ? 'bg-[var(--surface)] text-[var(--accent)]'
+                          : 'text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]'
                       } block w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors`}
                     >
                       <span className="mr-2">{tab.icon}</span>
@@ -268,75 +281,108 @@ export default function Home() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <>
-            <section>
-              <PlayoffRace
-                divisions={divisions}
-                wildCard={wildCard}
-              />
-            </section>
-            <section>
-              <WeeklyMatchups matchups={matchups} />
-            </section>
+            <ErrorBoundary>
+              <section>
+                <PlayoffRace
+                  divisions={divisions}
+                  wildCard={wildCard}
+                />
+              </section>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <section>
+                <WeeklyMatchups matchups={matchups} />
+              </section>
+            </ErrorBoundary>
           </>
         )}
 
         {/* Weekly Performance Tab */}
         {activeTab === 'weekly' && (
           <>
-            <section>
-              <WeeklyScores teams={teamStats} maxWeek={leagueData?.lastScoredWeek} />
-            </section>
-            <section>
-              <WeeklyRankingsHeatmap rankingsData={weeklyRankings} teams={teamStats} maxWeek={leagueData?.lastScoredWeek} />
-            </section>
+            <ErrorBoundary>
+              <section>
+                <WeeklyScores teams={teamStats} maxWeek={regularSeasonWeekCap} />
+              </section>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <section>
+                <WeeklyRankingsHeatmap rankingsData={weeklyRankings} teams={teamStats} maxWeek={regularSeasonWeekCap} />
+              </section>
+            </ErrorBoundary>
           </>
         )}
 
         {/* Season Trends Tab */}
         {activeTab === 'trends' && (
           <>
-            <section>
-              <StandingsOverTime standingsData={standingsOverTime} teams={teamStats} maxWeek={leagueData?.lastScoredWeek} />
-            </section>
-            <section>
-              <CumulativeScores cumulativeData={cumulativeScores} teams={teamStats} />
-            </section>
-            <section>
-              <PointsVsMedian differenceData={differenceFromMedian} teams={teamStats} />
-            </section>
+            <ErrorBoundary>
+              <section>
+                <StandingsOverTime standingsData={standingsOverTime} teams={teamStats} maxWeek={regularSeasonWeekCap} />
+              </section>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <section>
+                <CumulativeScores
+                  cumulativeData={cumulativeScores}
+                  teams={teamStats}
+                  maxWeek={regularSeasonWeekCap}
+                />
+              </section>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <section>
+                <PointsVsMedian
+                  differenceData={differenceFromMedian}
+                  teams={teamStats}
+                  maxWeek={regularSeasonWeekCap}
+                />
+              </section>
+            </ErrorBoundary>
           </>
         )}
 
         {/* Advanced Stats Tab */}
         {activeTab === 'advanced' && (
           <>
-            <section>
-              <PlayEveryoneAnalysis data={playEveryoneData} />
-            </section>
-            <section>
-              <WeeklyPlayAll data={weeklyPlayAllData} />
-            </section>
+            <ErrorBoundary>
+              <section>
+                <PlayEveryoneAnalysis data={playEveryoneData} />
+              </section>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <section>
+                <ScheduleLuckDistribution data={scheduleLuckSimulation} />
+              </section>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <section>
+                <WeeklyPlayAll data={weeklyPlayAllData} />
+              </section>
+            </ErrorBoundary>
           </>
         )}
 
         {/* Transactions Tab */}
         {activeTab === 'transactions' && (
-          <section>
-            <AllTransactions transactions={allTransactions} playerPositions={playerPositions} />
-          </section>
+          <ErrorBoundary>
+            <section>
+              <AllTransactions transactions={allTransactions} playerPositions={playerPositions} />
+            </section>
+          </ErrorBoundary>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-500 text-sm">
+      <footer className="bg-[var(--surface-elevated)] border-t border-[var(--border)] mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-[var(--muted)] text-sm">
           <p>
             Data from{' '}
             <a
               href="https://sleeper.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 underline"
+              className="text-[var(--accent)] hover:opacity-80 underline"
             >
               Sleeper
             </a>

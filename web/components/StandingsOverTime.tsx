@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TeamStats } from '@/lib/types';
-import { CHART_CONFIG } from '@/lib/constants';
+import { CHART_CONFIG, CHART_THEME } from '@/lib/constants';
 import { useChartHover } from '@/hooks/useChartHover';
 import { useTeamColors } from '@/hooks/useTeamColors';
 import CustomTooltip from './CustomTooltip';
@@ -43,13 +43,21 @@ export default function StandingsOverTime({ standingsData, teams, maxWeek }: Sta
       <div className="p-6">
         <ResponsiveContainer width="100%" height={CHART_CONFIG.defaultHeight}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="week" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
+            <XAxis
+              dataKey="week"
+              tick={{ fill: CHART_THEME.tick }}
+              axisLine={{ stroke: CHART_THEME.axis }}
+              tickLine={{ stroke: CHART_THEME.axis }}
+            />
             <YAxis
               reversed
               domain={[1, teams.length]}
               ticks={Array.from({ length: teams.length }, (_, i) => i + 1)}
-              label={{ value: 'Standing', angle: -90, position: 'insideLeft' }}
+              label={{ value: 'Standing', angle: -90, position: 'insideLeft', fill: CHART_THEME.tick }}
+              tick={{ fill: CHART_THEME.tick }}
+              axisLine={{ stroke: CHART_THEME.axis }}
+              tickLine={{ stroke: CHART_THEME.axis }}
             />
             <Tooltip
               content={
@@ -64,6 +72,7 @@ export default function StandingsOverTime({ standingsData, teams, maxWeek }: Sta
             <Legend
               onMouseEnter={(e) => setHoveredItem(e.dataKey as string)}
               onMouseLeave={clearHovered}
+              wrapperStyle={{ color: CHART_THEME.legend }}
             />
             {Object.keys(standingsData).map((username, index) => {
               const team = teams.find(t => t.username === username);

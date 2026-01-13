@@ -1,8 +1,197 @@
 @import "tailwindcss";
 
 :root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --surface: #111827;
+  --surface-elevated: #1f2937;
+  --border: #374151;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --success-text: #6ee7b7;
+  --danger-bg: rgba(248, 113, 113, 0.2);
+  --danger-text: #fca5a5;
+  --warning-bg: rgba(251, 191, 36, 0.2);
+  --warning-text: #fcd34d;
+  --info-bg: rgba(96, 165, 250, 0.2);
+  --info-text: #93c5fd;
+  --neutral-bg: rgba(148, 163, 184, 0.2);
+  --neutral-text: #e2e8f0;
+  --chart-grid: rgba(148, 163, 184, 0.25);
+  --chart-axis: #94a3b8;
+  --chart-tick: #cbd5f5;
+  --chart-legend: #e2e8f0;
+  --chart-tooltip-bg: #0f172a;
+  --chart-tooltip-border: #334155;
+  --chart-tooltip-text: #e2e8f0;
+  --chart-tooltip-muted: #94a3b8;
+  --chart-median: #e2e8f0;
+  --rank-top-bg: #fde725;
+  --rank-top-text: #1f2937;
+  --rank-upper-bg: #5ec962;
+  --rank-upper-text: #0f172a;
+  --rank-lower-bg: #21918c;
+  --rank-lower-text: #f8fafc;
+  --rank-bottom-bg: #440154;
+  --rank-bottom-text: #f8fafc;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827;
+  --surface: #f9fafb;
+  --surface-elevated: #ffffff;
+  --border: #e5e7eb;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --success-bg: #dcfce7;
+  --success-text: #15803d;
+  --danger-bg: #fee2e2;
+  --danger-text: #b91c1c;
+  --warning-bg: #fef3c7;
+  --warning-text: #b45309;
+  --info-bg: #dbeafe;
+  --info-text: #1d4ed8;
+  --neutral-bg: #f3f4f6;
+  --neutral-text: #374151;
+  --chart-grid: #e5e7eb;
+  --chart-axis: #9ca3af;
+  --chart-tick: #6b7280;
+  --chart-legend: #374151;
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-border: #e5e7eb;
+  --chart-tooltip-text: #111827;
+  --chart-tooltip-muted: #6b7280;
+  --chart-median: #1f2937;
+  --rank-top-bg: #fde725;
+  --rank-top-text: #1f2937;
+  --rank-upper-bg: #5ec962;
+  --rank-upper-text: #0f172a;
+  --rank-lower-bg: #21918c;
+  --rank-lower-text: #f8fafc;
+  --rank-bottom-bg: #440154;
+  --rank-bottom-text: #f8fafc;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --surface: #111827;
+  --surface-elevated: #1f2937;
+  --border: #374151;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --success-text: #6ee7b7;
+  --danger-bg: rgba(248, 113, 113, 0.2);
+  --danger-text: #fca5a5;
+  --warning-bg: rgba(251, 191, 36, 0.2);
+  --warning-text: #fcd34d;
+  --info-bg: rgba(96, 165, 250, 0.2);
+  --info-text: #93c5fd;
+  --neutral-bg: rgba(148, 163, 184, 0.2);
+  --neutral-text: #e2e8f0;
+  --chart-grid: rgba(148, 163, 184, 0.25);
+  --chart-axis: #94a3b8;
+  --chart-tick: #cbd5f5;
+  --chart-legend: #e2e8f0;
+  --chart-tooltip-bg: #0f172a;
+  --chart-tooltip-border: #334155;
+  --chart-tooltip-text: #e2e8f0;
+  --chart-tooltip-muted: #94a3b8;
+  --chart-median: #e2e8f0;
+  --rank-top-bg: #fde725;
+  --rank-top-text: #1f2937;
+  --rank-upper-bg: #5ec962;
+  --rank-upper-text: #0f172a;
+  --rank-lower-bg: #21918c;
+  --rank-lower-text: #f8fafc;
+  --rank-bottom-bg: #440154;
+  --rank-bottom-text: #f8fafc;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme='system'] {
+    --background: #ffffff;
+    --foreground: #111827;
+    --surface: #f9fafb;
+    --surface-elevated: #ffffff;
+    --border: #e5e7eb;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --warning-bg: #fef3c7;
+    --warning-text: #b45309;
+    --info-bg: #dbeafe;
+    --info-text: #1d4ed8;
+    --neutral-bg: #f3f4f6;
+    --neutral-text: #374151;
+    --chart-grid: #e5e7eb;
+    --chart-axis: #9ca3af;
+    --chart-tick: #6b7280;
+    --chart-legend: #374151;
+    --chart-tooltip-bg: #ffffff;
+    --chart-tooltip-border: #e5e7eb;
+    --chart-tooltip-text: #111827;
+    --chart-tooltip-muted: #6b7280;
+    --chart-median: #1f2937;
+    --rank-top-bg: #fde725;
+    --rank-top-text: #1f2937;
+    --rank-upper-bg: #5ec962;
+    --rank-upper-text: #0f172a;
+    --rank-lower-bg: #21918c;
+    --rank-lower-text: #f8fafc;
+    --rank-bottom-bg: #440154;
+    --rank-bottom-text: #f8fafc;
+    color-scheme: light;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --surface: #111827;
+    --surface-elevated: #1f2937;
+    --border: #374151;
+    --muted: #9ca3af;
+    --accent: #60a5fa;
+    --success-bg: rgba(16, 185, 129, 0.2);
+    --success-text: #6ee7b7;
+    --danger-bg: rgba(248, 113, 113, 0.2);
+    --danger-text: #fca5a5;
+    --warning-bg: rgba(251, 191, 36, 0.2);
+    --warning-text: #fcd34d;
+    --info-bg: rgba(96, 165, 250, 0.2);
+    --info-text: #93c5fd;
+    --neutral-bg: rgba(148, 163, 184, 0.2);
+    --neutral-text: #e2e8f0;
+    --chart-grid: rgba(148, 163, 184, 0.25);
+    --chart-axis: #94a3b8;
+    --chart-tick: #cbd5f5;
+    --chart-legend: #e2e8f0;
+    --chart-tooltip-bg: #0f172a;
+    --chart-tooltip-border: #334155;
+    --chart-tooltip-text: #e2e8f0;
+    --chart-tooltip-muted: #94a3b8;
+    --chart-median: #e2e8f0;
+    --rank-top-bg: #fde725;
+    --rank-top-text: #1f2937;
+    --rank-upper-bg: #5ec962;
+    --rank-upper-text: #0f172a;
+    --rank-lower-bg: #21918c;
+    --rank-lower-text: #f8fafc;
+    --rank-bottom-bg: #440154;
+    --rank-bottom-text: #f8fafc;
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
@@ -10,13 +199,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
