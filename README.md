@@ -5,27 +5,33 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 ## Features
 
 ### Overview Tab
-- 🏆 **Division Standings** - Division-by-division breakdown with team avatars, records, and games/points back from division leaders
-- 🎯 **Wild Card Race** - Comprehensive playoff picture showing IN/OUT status with visual playoff cutoff line
-- 🏈 **Weekly Matchups** - Expandable week-by-week matchup results with scores and winners
+- 🏆 **Division Standings** - Division breakdown with team records, games/points back, and leader highlights
+- 🎯 **Wild Card Race** - Playoff picture with IN/OUT status and cutoff line
+- 🏈 **Weekly Matchups** - Expandable week-by-week results with scores and winners
 
 ### Weekly Performance Tab
-- 📈 **Weekly Scores** - Complete table showing all weekly scores with win/loss color coding
-- 🔥 **Weekly Rankings Heatmap** - Color-coded heatmap showing performance ranking each week (1-12)
+- 📈 **Weekly Scores** - Score table with win/loss color coding and margin context
+- 🔥 **Weekly Rankings Heatmap** - Color-coded heatmap of weekly rank (1-N)
 
 ### Season Trends Tab
-- 📉 **Standings Over Time** - Track position changes throughout the season
-- 💯 **Cumulative Scores** - Total points accumulated over the season
-- 📊 **Difference from Median** - Shows cumulative points above/below median with reference line
+- 📉 **Standings Over Time** - Week-by-week rank history
+- 💯 **Cumulative Scores** - Running totals of points
+- 📊 **Difference from Median** - Cumulative points above/below median
 
 ### Advanced Stats Tab
-- 🎲 **Play Everyone Analysis** - "What if every team played every other team each week?" comparison
-- 📋 **Weekly Play All** - Week-by-week theoretical records showing consistency and schedule impact
+- 🎲 **Play Everyone Analysis** - Hypothetical records if teams played all opponents weekly
+- 📋 **Weekly Play All** - Week-by-week theoretical records for consistency checks
+- 🎯 **Schedule Luck Distribution** - Simulated win distributions with actual record highlight
 
-### Interactive Features
-- 🖱️ **Interactive Legend** - Hover over team names to highlight their line on charts
-- 🎯 **Custom Tooltips** - Sorted, scrollable tooltips showing all teams ranked by performance
-- 📱 **Responsive Design** - Works on desktop and mobile devices
+### Transactions Tab
+- 🔄 **All Transactions** - Adds, drops, swaps, and trades with filters
+- 💱 **Trade Value Analysis** - FantasyCalc-based value deltas and trade summaries
+
+### UI & Experience
+- 🎨 **Theme Toggle** - Light, dark, and system theme support
+- 🖱️ **Interactive Legends** - Hover to highlight teams on charts
+- 🎯 **Custom Tooltips** - Sorted, scrollable tooltips for dense charts
+- 📱 **Responsive Design** - Desktop and mobile friendly layouts
 
 ## Project Structure
 
@@ -33,26 +39,25 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 .
 ├── web/                      # Next.js web application
 │   ├── app/
-│   │   ├── api/league/       # API route for Sleeper data
+│   │   ├── api/league/       # Sleeper league data
+│   │   ├── api/players/      # Cached player map
+│   │   ├── api/transactions/ # Transaction history
 │   │   ├── page.tsx          # Main page with tabs
-│   │   └── layout.tsx        # App layout
+│   │   └── layout.tsx        # App layout + theme bootstrap
 │   ├── components/           # React components
-│   │   ├── PlayoffRace.tsx
-│   │   ├── WeeklyScores.tsx
-│   │   ├── WeeklyMatchups.tsx
-│   │   ├── StandingsOverTime.tsx
-│   │   ├── CumulativeScores.tsx
-│   │   ├── PointsVsMedian.tsx
-│   │   ├── WeeklyRankingsHeatmap.tsx
+│   │   ├── ScheduleLuckDistribution.tsx
 │   │   ├── PlayEveryoneAnalysis.tsx
 │   │   ├── WeeklyPlayAll.tsx
-│   │   ├── CustomTooltip.tsx
-│   │   └── ui/SectionCard.tsx
-│   └── lib/                  # Utilities and types
-│       ├── types.ts
-│       └── analyze.ts        # Data calculation functions
-├── fetch_data.py             # Python script to fetch data
-└── analyze_data.py           # Python script to analyze data
+│   │   ├── WeeklyScores.tsx
+│   │   └── ui/               # Shared UI pieces
+│   ├── hooks/                # Theme + chart helpers
+│   └── lib/                  # Utilities, API clients, and analytics
+│       ├── analyze.ts
+│       ├── config.ts
+│       ├── leagueSettings.ts
+│       └── theme.ts
+├── scripts/                  # Python data tooling
+└── league_data.json          # Example data dump
 ```
 
 ## Getting Started
@@ -87,36 +92,35 @@ The Python scripts can be used to fetch and analyze data separately:
 
 2. Fetch league data:
    ```bash
-   uv run python fetch_data.py
+   uv run python scripts/fetch_data.py
    ```
 
 3. Generate analysis Excel file:
    ```bash
-   uv run python analyze_data.py
+   uv run python scripts/analyze_data.py
    ```
 
 ## Configuration
 
-To use with a different Sleeper league:
+### Sleeper League
 
-1. Update the `LEAGUE_ID` in:
-   - `web/app/api/league/route.ts`
-   - `fetch_data.py`
+Set the league ID with an environment variable or update the fallback in `web/lib/config.ts`.
 
-2. Replace with your league ID from the Sleeper URL:
-   ```
-   https://sleeper.com/leagues/YOUR_LEAGUE_ID/league
-   ```
+```bash
+NEXT_PUBLIC_LEAGUE_ID=YOUR_LEAGUE_ID
+```
+
+### Caching
+
+Cache durations and retry settings live in `web/lib/config.ts` under `CACHE_CONFIG` and `RETRY_CONFIG`.
 
 ## Deployment
 
 ### Deploy to Netlify
 
-1. Push your code to GitHub
-
+1. Push your code to GitHub.
 2. Connect your repository to your hosting site.
-
-3. Deploy!
+3. Deploy.
 
 The app will automatically fetch live data from the Sleeper API on each page load.
 
@@ -127,37 +131,26 @@ The app will automatically fetch live data from the Sleeper API on each page loa
 - **Tailwind CSS** - Utility-first styling
 - **Recharts** - Interactive charting library
 - **Sleeper API** - Fantasy football data source
+- **FantasyCalc API** - Trade value analytics
 - **Python** - Data fetching and analysis scripts
 
-## Stats & Visualizations
+## Analytics Coverage
 
-The app provides comprehensive analytics including:
-
-### Basic Stats
-- **Division Standings** - Division-by-division rankings with team avatars and records
-- **Wild Card Race** - Playoff positioning with IN/OUT status and cutoff visualization
-- **Weekly Scores** - Points scored by each team each week with win/loss color coding
-- **Matchup History** - Head-to-head results with winners highlighted
+### Core Metrics
+- Division standings and wild card race
+- Weekly scores, matchups, and heatmaps
+- Cumulative and median-relative scoring trends
 
 ### Advanced Analytics
-- **Standings Progression** - How team rankings change week by week
-- **Cumulative Performance** - Running totals of points over time
-- **Median Comparison** - Performance relative to league median with reference line
-- **Weekly Rankings** - Heatmap showing weekly performance ranks (1-12)
-- **Play Everyone Stats** - Hypothetical records if teams played all opponents each week
-- **Weekly Play All** - Week-by-week theoretical records showing consistency
-
-### Visualization Features
-- All charts use interactive legends (hover to highlight)
-- Custom tooltips show all teams sorted by performance
-- Color-coded heatmaps for easy pattern recognition
-- Responsive charts that work on all screen sizes
+- Play-everyone and weekly play-all records
+- Schedule luck simulations with win distributions
+- Transaction and trade value summaries
 
 ## Development Notes
 
-- Charts use state management for interactive hover effects
-- Custom tooltip component handles overflow and scrolling for 12+ teams
-- Data is fetched from Sleeper API with smart caching
+- Charts use interactive hover state to emphasize teams
+- Tooltips are optimized for 12+ teams with sorted output
+- Theme preference is stored in local storage and respects system defaults
 
 ## License
 
