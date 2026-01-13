@@ -183,24 +183,24 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Header */}
       <header className="bg-[var(--surface-elevated)] shadow-md border-b border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="absolute right-4 top-4 sm:right-6 sm:top-6 lg:right-8 lg:top-6">
+            <ThemeToggle />
+          </div>
           <div className="text-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex items-center justify-center gap-4">
-                {leagueData?.league?.avatar && (
-                  <Image
-                    src={`https://sleepercdn.com/avatars/${leagueData.league.avatar}`}
-                    alt="League Avatar"
-                    width={64}
-                    height={64}
-                    className="rounded-full"
-                  />
-                )}
-                <h1 className="text-4xl font-bold text-[var(--foreground)]">
-                  {leagueData?.league?.name || 'Fantasy Football'}
-                </h1>
-              </div>
-              <ThemeToggle />
+            <div className="flex items-center justify-center gap-4">
+              {leagueData?.league?.avatar && (
+                <Image
+                  src={`https://sleepercdn.com/avatars/${leagueData.league.avatar}`}
+                  alt="League Avatar"
+                  width={64}
+                  height={64}
+                  className="rounded-full"
+                />
+              )}
+              <h1 className="text-4xl font-bold text-[var(--foreground)]">
+                {leagueData?.league?.name || 'Fantasy Football'}
+              </h1>
             </div>
             <p className="mt-2 text-lg text-[var(--muted)]">
               Season {leagueData?.league?.season || '2025'}
