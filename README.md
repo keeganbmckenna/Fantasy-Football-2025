@@ -24,8 +24,7 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 - 🎯 **Schedule Luck Distribution** - Simulated win distributions with actual record highlight
 
 ### Transactions Tab
-- 🔄 **All Transactions** - Adds, drops, swaps, and trades with filters
-- 💱 **Trade Value Analysis** - FantasyCalc-based value deltas and trade summaries
+- 🔄 **Status** - Currently hidden; transaction analysis needs more work to provide clear value
 
 ### UI & Experience
 - 🎨 **Theme Toggle** - Light, dark, and system theme support
@@ -144,7 +143,7 @@ The app will automatically fetch live data from the Sleeper API on each page loa
 ### Advanced Analytics
 - Play-everyone and weekly play-all records
 - Schedule luck simulations with win distributions
-- Transaction and trade value summaries
+- Transaction analysis is temporarily disabled while refining insights
 
 ## Development Notes
 
