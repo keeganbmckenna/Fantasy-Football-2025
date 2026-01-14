@@ -3,7 +3,7 @@ export const THEME_STORAGE_KEY = 'fantasy-football-theme';
 export const THEME_VALUES = ['light', 'dark', 'system'] as const;
 export type ThemePreference = (typeof THEME_VALUES)[number];
 
-export const DEFAULT_THEME: ThemePreference = 'dark';
+export const DEFAULT_THEME: ThemePreference = 'system';
 
 export type ResolvedTheme = 'light' | 'dark';
 
