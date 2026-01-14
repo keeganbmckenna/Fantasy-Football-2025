@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import Image from 'next/image';
 import PlayoffRace from '@/components/PlayoffRace';
 import WeeklyScores from '@/components/WeeklyScores';
@@ -12,11 +13,11 @@ import WeeklyRankingsHeatmap from '@/components/WeeklyRankingsHeatmap';
 import PlayEveryoneAnalysis from '@/components/PlayEveryoneAnalysis';
 import ScheduleLuckDistribution from '@/components/ScheduleLuckDistribution';
 import WeeklyPlayAll from '@/components/WeeklyPlayAll';
-import AllTransactions from '@/components/AllTransactions';
+
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding, SleeperTransaction, ProcessedTransaction, ScheduleLuckSimulation } from '@/lib/types';
+import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding, ScheduleLuckSimulation } from '@/lib/types';
 import {
   calculateTeamStats,
   getWeeklyMatchups,
@@ -31,11 +32,6 @@ import {
   simulateScheduleLuck,
 } from '@/lib/analyze';
 import { getLeagueSettings } from '@/lib/leagueSettings';
-import {
-  processTransactions,
-  extractTrades,
-  tradesToProcessedTransactions,
-} from '@/lib/transactionAnalyze';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -45,6 +41,8 @@ export default function Home() {
   const [matchups, setMatchups] = useState<Record<number, WeekMatchup[]>>({});
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState('');
+  const [availableSeasons, setAvailableSeasons] = useState<string[]>([]);
 
   // Calculated data
   const [standingsOverTime, setStandingsOverTime] = useState<Record<string, number[]>>({});
@@ -57,102 +55,76 @@ export default function Home() {
   const [divisions, setDivisions] = useState<DivisionStanding[]>([]);
   const [wildCard, setWildCard] = useState<WildCardStanding[]>([]);
 
-  const regularSeasonWeekCap = leagueData
-    ? Math.min(leagueData.lastScoredWeek, getLeagueSettings(leagueData.league).regularSeasonEnd)
+  const leagueSettings = leagueData ? getLeagueSettings(leagueData.league) : null;
+  const regularSeasonWeekCap = leagueData && leagueSettings
+    ? Math.min(leagueData.lastScoredWeek, leagueSettings.regularSeasonEnd)
     : undefined;
 
-  // Transaction data
-  const [allTransactions, setAllTransactions] = useState<ProcessedTransaction[]>([]);
-  const [playerPositions, setPlayerPositions] = useState<Record<string, string>>({});
+  const fetchData = async (season?: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const query = season ? `?season=${season}` : '';
+      const response = await fetch(`/api/league${query}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch league data');
+      }
+      const data: LeagueData = await response.json();
+      setLeagueData(data);
+      setAvailableSeasons(data.availableSeasons || []);
+      setSelectedSeason(season ?? data.league.season);
+
+      // Calculate stats (pass lastScoredWeek to limit performance metrics to completed weeks)
+      const stats = calculateTeamStats(data, data.lastScoredWeek);
+      setTeamStats(stats);
+
+      const leagueSettings = getLeagueSettings(data.league);
+      const regularSeasonWeekCap = Math.min(
+        data.lastScoredWeek,
+        leagueSettings.regularSeasonEnd
+      );
+
+      // Get matchups
+      const weeklyMatchups = getWeeklyMatchups(data);
+      setMatchups(weeklyMatchups);
+
+      // Calculate additional analytics
+      // Only count completed regular-season weeks for weekly analytics
+      setStandingsOverTime(calculateStandingsOverTime(stats, regularSeasonWeekCap));
+      setCumulativeScores(calculateCumulativeScores(stats, regularSeasonWeekCap));
+      setDifferenceFromMedian(calculateDifferenceFromMedian(stats, regularSeasonWeekCap));
+      setWeeklyRankings(calculateWeeklyRankings(stats, regularSeasonWeekCap));
+      setPlayEveryoneData(calculatePlayEveryoneStats(stats, regularSeasonWeekCap));
+      setWeeklyPlayAllData(calculateWeeklyPlayAll(stats, regularSeasonWeekCap));
+      setScheduleLuckSimulation(simulateScheduleLuck(stats, 20000, regularSeasonWeekCap));
+
+      // Calculate division standings and wild card race
+      const hasDivisions = leagueSettings.divisions > 0;
+      const divisionStandings = hasDivisions ? calculateDivisionStandings(stats) : [];
+      setDivisions(divisionStandings);
+
+      const wildCardSpots = hasDivisions
+        ? Math.max(leagueSettings.playoffTeams - leagueSettings.divisions, 0)
+        : 0;
+      const wildCardStandings = wildCardSpots > 0
+        ? calculateWildCardStandings(stats, leagueSettings.playoffTeams)
+        : [];
+      setWildCard(wildCardStandings);
+
+      setLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setLoading(false);
+    }
+  };
+
+  const handleSeasonChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const season = event.target.value;
+    setSelectedSeason(season);
+    fetchData(season);
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/league');
-        if (!response.ok) {
-          throw new Error('Failed to fetch league data');
-        }
-        const data: LeagueData = await response.json();
-        setLeagueData(data);
-
-        // Calculate stats (pass lastScoredWeek to limit performance metrics to completed weeks)
-        const stats = calculateTeamStats(data, data.lastScoredWeek);
-        setTeamStats(stats);
-
-        const leagueSettings = getLeagueSettings(data.league);
-        const regularSeasonWeekCap = Math.min(
-          data.lastScoredWeek,
-          leagueSettings.regularSeasonEnd
-        );
-
-        // Get matchups
-        const weeklyMatchups = getWeeklyMatchups(data);
-        setMatchups(weeklyMatchups);
-
-        // Calculate additional analytics
-        // Only count completed regular-season weeks for weekly analytics
-        setStandingsOverTime(calculateStandingsOverTime(stats, regularSeasonWeekCap));
-        setCumulativeScores(calculateCumulativeScores(stats, regularSeasonWeekCap));
-        setDifferenceFromMedian(calculateDifferenceFromMedian(stats, regularSeasonWeekCap));
-        setWeeklyRankings(calculateWeeklyRankings(stats, regularSeasonWeekCap));
-        setPlayEveryoneData(calculatePlayEveryoneStats(stats, regularSeasonWeekCap));
-        setWeeklyPlayAllData(calculateWeeklyPlayAll(stats, regularSeasonWeekCap));
-        setScheduleLuckSimulation(simulateScheduleLuck(stats, 20000, regularSeasonWeekCap));
-
-        // Calculate division standings and wild card race
-        const divisionStandings = calculateDivisionStandings(stats);
-        setDivisions(divisionStandings);
-
-        const playoffSpots = data.league?.settings?.playoff_teams || 6;
-        const wildCardStandings = calculateWildCardStandings(stats, playoffSpots);
-        setWildCard(wildCardStandings);
-
-        // Fetch player data and transaction data in parallel
-        const [transactionRes, playerRes] = await Promise.all([
-          fetch('/api/transactions'),
-          fetch('/api/players')
-        ]);
-
-        let playerNames: Record<string, string> = {};
-        let positions: Record<string, string> = {};
-        if (playerRes.ok) {
-          const playerData = await playerRes.json();
-          playerNames = playerData.players || {};
-          positions = playerData.positions || {};
-          setPlayerPositions(positions);
-        }
-
-        if (transactionRes.ok) {
-          const transactionData: { transactions: Array<SleeperTransaction & { week: number }> } = await transactionRes.json();
-
-          // Process transactions with player names (includes adds, drops, swaps)
-          const processedTransactions = processTransactions(
-            transactionData.transactions,
-            data,
-            playerNames
-          );
-
-          // Extract trades with player names, convert to ProcessedTransaction format
-          const tradeData = extractTrades(
-            transactionData.transactions,
-            data,
-            playerNames
-          );
-          const processedTrades = tradesToProcessedTransactions(tradeData);
-
-          // Combine all transactions and sort by timestamp
-          const combined = [...processedTransactions, ...processedTrades].sort((a, b) => b.timestamp - a.timestamp);
-          setAllTransactions(combined);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        setLoading(false);
-      }
-    }
-
     fetchData();
   }, []);
 
@@ -176,8 +148,13 @@ export default function Home() {
     { id: 'weekly', name: 'Weekly Performance', icon: '📈' },
     { id: 'trends', name: 'Season Trends', icon: '📉' },
     { id: 'advanced', name: 'Advanced Stats', icon: '🔬' },
-    { id: 'transactions', name: 'Transactions', icon: '🔄' },
   ];
+
+  const seasonOptions = availableSeasons.length
+    ? availableSeasons
+    : leagueData?.league?.season
+      ? [leagueData.league.season]
+      : [];
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -202,9 +179,20 @@ export default function Home() {
                 {leagueData?.league?.name || 'Fantasy Football'}
               </h1>
             </div>
-            <p className="mt-2 text-lg text-[var(--muted)]">
-              Season {leagueData?.league?.season || '2025'}
-            </p>
+            <div className="mt-2 flex items-center justify-center gap-3 text-lg text-[var(--muted)]">
+              <span>Season</span>
+              <select
+                value={selectedSeason || leagueData?.league?.season || ''}
+                onChange={handleSeasonChange}
+                className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-sm text-[var(--foreground)] shadow-sm focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              >
+                {seasonOptions.map((season) => (
+                  <option key={season} value={season}>
+                    {season}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -286,6 +274,8 @@ export default function Home() {
                 <PlayoffRace
                   divisions={divisions}
                   wildCard={wildCard}
+                  standings={teamStats}
+                  playoffTeams={leagueSettings?.playoffTeams ?? teamStats.length}
                 />
               </section>
             </ErrorBoundary>
@@ -363,14 +353,6 @@ export default function Home() {
           </>
         )}
 
-        {/* Transactions Tab */}
-        {activeTab === 'transactions' && (
-          <ErrorBoundary>
-            <section>
-              <AllTransactions transactions={allTransactions} playerPositions={playerPositions} />
-            </section>
-          </ErrorBoundary>
-        )}
       </main>
 
       {/* Footer */}

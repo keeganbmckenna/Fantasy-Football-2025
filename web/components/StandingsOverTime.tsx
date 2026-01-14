@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TeamStats } from '@/lib/types';
 import { CHART_CONFIG, CHART_THEME } from '@/lib/constants';
@@ -18,6 +18,21 @@ interface StandingsOverTimeProps {
 export default function StandingsOverTime({ standingsData, teams, maxWeek }: StandingsOverTimeProps) {
   const { setHoveredItem, clearHovered, isHovered, isOtherHovered } = useChartHover<string>();
   const teamColors = useTeamColors(teams, Object.keys(standingsData));
+  const [shouldAnimate, setShouldAnimate] = useState(true);
+  const animationDuration = 800;
+
+  useEffect(() => {
+    setShouldAnimate(true);
+  }, [standingsData, maxWeek, teams]);
+
+  useEffect(() => {
+    if (!shouldAnimate) {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => setShouldAnimate(false), animationDuration);
+    return () => clearTimeout(timeout);
+  }, [shouldAnimate, animationDuration]);
 
   // Transform data for recharts - memoized for performance
   const chartData = useMemo(() => {
@@ -77,6 +92,7 @@ export default function StandingsOverTime({ standingsData, teams, maxWeek }: Sta
             {Object.keys(standingsData).map((username, index) => {
               const team = teams.find(t => t.username === username);
               const color = teamColors[index]?.color;
+              const isDimmed = isOtherHovered(username);
 
               return (
                 <Line
@@ -86,9 +102,11 @@ export default function StandingsOverTime({ standingsData, teams, maxWeek }: Sta
                   name={team?.teamName || username}
                   stroke={color}
                   strokeWidth={isHovered(username) ? CHART_CONFIG.strokeWidth.hovered : CHART_CONFIG.strokeWidth.default}
-                  strokeOpacity={isOtherHovered(username) ? CHART_CONFIG.opacity.dimmed : CHART_CONFIG.opacity.default}
-                  dot={{ r: isHovered(username) ? CHART_CONFIG.dotRadius.hovered : CHART_CONFIG.dotRadius.default }}
-                  activeDot={{ r: CHART_CONFIG.dotRadius.medianActive }}
+                  strokeOpacity={isDimmed ? 0 : CHART_CONFIG.opacity.default}
+                  dot={{ r: isDimmed ? 0 : (isHovered(username) ? CHART_CONFIG.dotRadius.hovered : CHART_CONFIG.dotRadius.default) }}
+                  activeDot={isDimmed ? false : { r: CHART_CONFIG.dotRadius.medianActive }}
+                  isAnimationActive={shouldAnimate}
+                  animationDuration={animationDuration}
                 />
               );
             })}

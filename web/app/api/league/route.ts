@@ -1,25 +1,65 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { SLEEPER_CONFIG, CACHE_CONFIG } from '@/lib/config';
-import type { SleeperUser, SleeperRoster, SleeperMatchup } from '@/lib/types';
+import type { SleeperLeague, SleeperUser, SleeperRoster, SleeperMatchup } from '@/lib/types';
 
-export async function GET() {
+const fetchLeague = async (baseUrl: string, leagueId: string) => {
+  const response = await fetch(`${baseUrl}/league/${leagueId}`, {
+    next: { revalidate: CACHE_CONFIG.leagueData },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch league ${leagueId}`);
+  }
+
+  return response.json() as Promise<SleeperLeague>;
+};
+
+const buildLeagueChain = async (baseUrl: string, leagueId: string) => {
+  const leagues: SleeperLeague[] = [];
+  const visited = new Set<string>();
+  let currentLeagueId: string | null | undefined = leagueId;
+
+  while (currentLeagueId && !visited.has(currentLeagueId)) {
+    visited.add(currentLeagueId);
+    const league = await fetchLeague(baseUrl, currentLeagueId);
+    leagues.push(league);
+    currentLeagueId = league.previous_league_id;
+  }
+
+  return leagues;
+};
+
+export async function GET(request: NextRequest) {
   try {
-    const { leagueId, baseUrl, maxWeeks } = SLEEPER_CONFIG;
+    const { leagueId: baseLeagueId, baseUrl, maxWeeks } = SLEEPER_CONFIG;
+    const seasonParam = request.nextUrl.searchParams.get('season');
+    const leagues = await buildLeagueChain(baseUrl, baseLeagueId);
+    const availableSeasons = Array.from(new Set(leagues.map((league) => league.season)));
+    const targetLeague = seasonParam
+      ? leagues.find((league) => league.season === seasonParam)
+      : leagues[0];
+
+    if (!targetLeague) {
+      return NextResponse.json(
+        { error: `Season ${seasonParam} not found` },
+        { status: 404 }
+      );
+    }
+
+    const targetLeagueId = targetLeague.league_id;
 
     // Fetch all data in parallel with configured cache
-    const [leagueRes, usersRes, rostersRes] = await Promise.all([
-      fetch(`${baseUrl}/league/${leagueId}`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
-      fetch(`${baseUrl}/league/${leagueId}/users`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
-      fetch(`${baseUrl}/league/${leagueId}/rosters`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
+    const [usersRes, rostersRes] = await Promise.all([
+      fetch(`${baseUrl}/league/${targetLeagueId}/users`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
+      fetch(`${baseUrl}/league/${targetLeagueId}/rosters`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
     ]);
 
-    const league = await leagueRes.json();
     const users: SleeperUser[] = await usersRes.json();
     const rosters: SleeperRoster[] = await rostersRes.json();
 
-    // Get current week or default to 18
-    const currentWeek = league.settings?.leg || 18;
-    const lastScoredWeek = league.settings?.last_scored_leg || currentWeek;
+    // Get current week or default to max configured weeks
+    const currentWeek = targetLeague.settings?.leg || maxWeeks;
+    const lastScoredWeek = targetLeague.settings?.last_scored_leg || currentWeek;
 
     // Fetch matchups for all weeks
     const matchupPromises = [];
@@ -28,7 +68,7 @@ export async function GET() {
       // Cache completed weeks for one day
       const isCurrentWeek = week === currentWeek && week > lastScoredWeek;
       matchupPromises.push(
-        fetch(`${baseUrl}/league/${leagueId}/matchups/${week}`, {
+        fetch(`${baseUrl}/league/${targetLeagueId}/matchups/${week}`, {
           next: { revalidate: isCurrentWeek ? CACHE_CONFIG.currentWeek : CACHE_CONFIG.completedWeek }
         }).then(res => res.json())
       );
@@ -55,20 +95,21 @@ export async function GET() {
 
     // Build division names from league metadata
     const divisionNames: Record<number, string> = {};
-    if (league.metadata) {
-      if (league.metadata.division_1) divisionNames[1] = league.metadata.division_1;
-      if (league.metadata.division_2) divisionNames[2] = league.metadata.division_2;
-      if (league.metadata.division_3) divisionNames[3] = league.metadata.division_3;
+    if (targetLeague.metadata) {
+      if (targetLeague.metadata.division_1) divisionNames[1] = targetLeague.metadata.division_1;
+      if (targetLeague.metadata.division_2) divisionNames[2] = targetLeague.metadata.division_2;
+      if (targetLeague.metadata.division_3) divisionNames[3] = targetLeague.metadata.division_3;
     }
 
     return NextResponse.json({
-      league,
+      league: targetLeague,
       users,
       rosters,
       matchups: matchupsByWeek,
       userMap,
       rosterToUserMap,
-      lastScoredWeek: league.settings?.last_scored_leg || currentWeek,
+      lastScoredWeek,
+      availableSeasons,
       divisionNames,
     });
   } catch (error) {

@@ -59,6 +59,7 @@ export interface SleeperLeague {
   };
   bracket_id?: string | null;
   loser_bracket_id?: string | null;
+  previous_league_id?: string | null;
 }
 
 export interface LeagueData {
@@ -69,6 +70,7 @@ export interface LeagueData {
   userMap: Record<string, SleeperUser>;
   rosterToUserMap: Record<number, string>;
   lastScoredWeek: number;
+  availableSeasons: string[];
   divisionNames?: Record<number, string>;
 }
 

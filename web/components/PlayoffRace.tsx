@@ -6,6 +6,8 @@ import SectionCard from './ui/SectionCard';
 interface PlayoffRaceProps {
   divisions: DivisionStanding[];
   wildCard: WildCardStanding[];
+  standings: TeamStats[];
+  playoffTeams: number;
 }
 
 interface TeamRowProps {
@@ -144,6 +146,65 @@ function DivisionCard({ division }: { division: DivisionStanding }) {
   );
 }
 
+function OverallStandingsCard({
+  standings,
+  playoffTeams,
+}: {
+  standings: TeamStats[];
+  playoffTeams: number;
+}) {
+  const hasCutoff = playoffTeams > 0 && standings.length > 0;
+  const cutoffIndex = hasCutoff ? Math.min(playoffTeams, standings.length) - 1 : -1;
+  const cutoffTeam = hasCutoff ? standings[cutoffIndex] : undefined;
+
+  const getGamesBack = (team: TeamStats) => {
+    if (!cutoffTeam) {
+      return 0;
+    }
+
+    const winDiff = cutoffTeam.wins - team.wins;
+    const lossDiff = team.losses - cutoffTeam.losses;
+    return -(winDiff + lossDiff) / 2;
+  };
+
+  return (
+    <SectionCard
+      title="Standings"
+      subtitle="Overall league standings"
+      gradientType="primary"
+    >
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-[var(--border)] table-fixed">
+          <thead className="bg-[var(--surface)]">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase w-12">Rank</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase w-56">Team</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase w-20">Record</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase w-24">Points</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase w-20">GB</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase w-24">PB</th>
+            </tr>
+          </thead>
+          <tbody className="bg-[var(--surface-elevated)] divide-y divide-[var(--border)]">
+            {standings.map((team, index) => (
+              <TeamRow
+                key={team.username}
+                team={team}
+                rank={team.standing}
+                gamesBack={getGamesBack(team)}
+                pointsBack={cutoffTeam ? team.totalPoints - cutoffTeam.totalPoints : 0}
+                isLeader={team.standing === 1}
+                isInPlayoffs={hasCutoff && team.standing <= playoffTeams}
+                showCutoffLine={hasCutoff && index === cutoffIndex}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </SectionCard>
+  );
+}
+
 function WildCardCard({
   wildCard,
 }: {
@@ -208,15 +269,19 @@ function WildCardCard({
   );
 }
 
-export default function PlayoffRace({ divisions, wildCard }: PlayoffRaceProps) {
+export default function PlayoffRace({ divisions, wildCard, standings, playoffTeams }: PlayoffRaceProps) {
   return (
     <div className="space-y-6">
-      {/* Division Standings */}
-      <div className="space-y-6">
-        {divisions.map((division) => (
-          <DivisionCard key={division.division} division={division} />
-        ))}
-      </div>
+      {/* Division Standings or Overall Standings */}
+      {divisions.length > 0 ? (
+        <div className="space-y-6">
+          {divisions.map((division) => (
+            <DivisionCard key={division.division} division={division} />
+          ))}
+        </div>
+      ) : (
+        <OverallStandingsCard standings={standings} playoffTeams={playoffTeams} />
+      )}
 
       {/* Wild Card Race */}
       {wildCard.length > 0 && (

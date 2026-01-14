@@ -874,15 +874,28 @@ export function calculateWildCardStandings(
   // Get division leaders
   const divisionLeaders = teams.filter((t) => t.isDivisionLeader);
   const numDivisionLeaders = divisionLeaders.length;
-  const wildCardSpots = playoffSpots - numDivisionLeaders;
+  const wildCardSpots = Math.max(playoffSpots - numDivisionLeaders, 0);
+
+  if (numDivisionLeaders === 0 || wildCardSpots === 0) {
+    return [];
+  }
 
   // Get non-division leaders sorted by standing
   const wildCardTeams = teams
     .filter((t) => !t.isDivisionLeader)
     .sort((a, b) => b.standingValue - a.standingValue);
 
+  if (wildCardTeams.length === 0) {
+    return [];
+  }
+
   // Find the wildcard cutoff team (last team in)
-  const cutoffTeam = wildCardTeams[wildCardSpots - 1];
+  const cutoffIndex = Math.min(wildCardSpots, wildCardTeams.length) - 1;
+  const cutoffTeam = wildCardTeams[cutoffIndex];
+
+  if (!cutoffTeam) {
+    return [];
+  }
 
   // Calculate wild card standings
   return wildCardTeams.map((team, index) => {
@@ -890,10 +903,9 @@ export function calculateWildCardStandings(
     const isIn = rank <= wildCardSpots;
 
     // Games out from cutoff
-    let gamesOut = 0;
     const winDiff = cutoffTeam.wins - team.wins;
     const lossDiff = team.losses - cutoffTeam.losses;
-    gamesOut = -(winDiff + lossDiff) / 2;
+    const gamesOut = -(winDiff + lossDiff) / 2;
 
     team.wildCardRank = rank;
     team.wildCardGamesOut = gamesOut;
