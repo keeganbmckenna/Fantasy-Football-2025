@@ -3,7 +3,11 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import SectionCard from '@/components/ui/SectionCard';
 import { CHART_THEME } from '@/lib/constants';
-import { ScheduleLuckSimulation, ScheduleSimulationOutcome } from '@/lib/types';
+import {
+  ScheduleLuckSimulation,
+  ScheduleLuckDistribution as ScheduleLuckDistributionType,
+  ScheduleSimulationOutcome,
+} from '@/lib/types';
 
 interface ScheduleLuckDistributionProps {
   data: ScheduleLuckSimulation | null;
@@ -28,20 +32,102 @@ const SIM_BAR_COLOR = '#3b82f6';
 
 const formatWinsLabel = (wins: number) => (Number.isInteger(wins) ? wins.toString() : wins.toFixed(1));
 
-const buildChartData = (outcomes: ScheduleSimulationOutcome[], actualWins: number) => {
-  const outcomeMap = new Map(outcomes.map((outcome) => [outcome.wins, outcome]));
-  if (!outcomeMap.has(actualWins)) {
-    outcomeMap.set(actualWins, { wins: actualWins, count: 0, frequency: 0 });
+const getMaxFrequency = (teams: ScheduleLuckDistributionType[]) =>
+  teams.reduce((max, team) => {
+    const teamMax = team.outcomes.reduce((currentMax, outcome) => Math.max(currentMax, outcome.frequency), 0);
+    return Math.max(max, teamMax);
+  }, 0);
+
+const getWinsDomain = (teams: ScheduleLuckDistributionType[]) => {
+  const domain = teams.reduce(
+    (current, team) => {
+      const teamWins = team.outcomes.map((outcome) => outcome.wins).concat(team.actualWins);
+      const teamMin = Math.min(current.min, ...teamWins);
+      const teamMax = Math.max(current.max, ...teamWins);
+      return { min: teamMin, max: teamMax };
+    },
+    { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
+  );
+
+  if (!Number.isFinite(domain.min) || !Number.isFinite(domain.max)) {
+    return { min: 0, max: 0 };
   }
 
-  return Array.from(outcomeMap.values())
+  return domain;
+};
+
+const getWinsStep = (teams: ScheduleLuckDistributionType[], fallbackStep = 1) => {
+  const values = teams.flatMap((team) => team.outcomes.map((outcome) => outcome.wins).concat(team.actualWins));
+  const sortedValues = Array.from(new Set(values)).sort((a, b) => a - b);
+
+  if (sortedValues.length < 2) {
+    return fallbackStep;
+  }
+
+  let minStep = Number.POSITIVE_INFINITY;
+
+  for (let index = 1; index < sortedValues.length; index++) {
+    const diff = sortedValues[index] - sortedValues[index - 1];
+    if (diff > 0 && diff < minStep) {
+      minStep = diff;
+    }
+  }
+
+  return Number.isFinite(minStep) ? minStep : fallbackStep;
+};
+
+const getPaddedWinsDomain = (domain: { min: number; max: number }, step: number) => {
+  const padding = step / 2;
+  return {
+    min: domain.min - padding,
+    max: domain.max + padding,
+  };
+};
+
+const getWinsTicks = (minWins: number, maxWins: number) => {
+  const start = Math.ceil(minWins);
+  const end = Math.floor(maxWins);
+
+  if (start > end) {
+    return [start];
+  }
+
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+};
+
+const normalizeWins = (wins: number) => Number(wins.toFixed(3));
+
+const buildChartData = (
+  outcomes: ScheduleSimulationOutcome[],
+  actualWins: number,
+  minWins: number,
+  maxWins: number,
+  step: number,
+) => {
+  const outcomeMap = new Map(outcomes.map((outcome) => [normalizeWins(outcome.wins), outcome]));
+  const normalizedActualWins = normalizeWins(actualWins);
+
+  if (!outcomeMap.has(normalizedActualWins)) {
+    outcomeMap.set(normalizedActualWins, { wins: actualWins, count: 0, frequency: 0 });
+  }
+
+  const bins: ScheduleSimulationOutcome[] = [];
+  const totalSteps = Math.floor((maxWins - minWins) / step);
+
+  for (let index = 0; index <= totalSteps; index += 1) {
+    const wins = normalizeWins(minWins + step * index);
+    const outcome = outcomeMap.get(wins) ?? { wins, count: 0, frequency: 0 };
+    bins.push(outcome);
+  }
+
+  return bins
     .sort((a, b) => a.wins - b.wins)
     .map((outcome) => ({
       wins: outcome.wins,
       winsLabel: formatWinsLabel(outcome.wins),
       count: outcome.count,
       frequency: outcome.frequency,
-      isActual: outcome.wins === actualWins,
+      isActual: normalizeWins(outcome.wins) === normalizedActualWins,
     }));
 };
 
@@ -67,6 +153,14 @@ export default function ScheduleLuckDistribution({ data }: ScheduleLuckDistribut
     return null;
   }
 
+  const maxFrequency = getMaxFrequency(data.teams);
+  const yAxisMax = Math.min(1, maxFrequency * 1.05);
+  const winsDomain = getWinsDomain(data.teams);
+  const winsStep = getWinsStep(data.teams);
+  const { min: xAxisMin, max: xAxisMax } = getPaddedWinsDomain(winsDomain, winsStep);
+  const { min: minWins, max: maxWins } = winsDomain;
+  const xAxisTicks = getWinsTicks(minWins, maxWins);
+
   return (
     <SectionCard
       title="Schedule Luck Distribution"
@@ -80,7 +174,7 @@ export default function ScheduleLuckDistribution({ data }: ScheduleLuckDistribut
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
         {data.teams.map((team) => {
-          const chartData = buildChartData(team.outcomes, team.actualWins);
+          const chartData = buildChartData(team.outcomes, team.actualWins, minWins, maxWins, winsStep);
 
           return (
             <div
@@ -100,10 +194,15 @@ export default function ScheduleLuckDistribution({ data }: ScheduleLuckDistribut
                 <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
                   <XAxis
-                    dataKey="winsLabel"
+                    dataKey="wins"
+                    type="number"
                     tick={{ fill: CHART_THEME.tick }}
                     axisLine={{ stroke: CHART_THEME.axis }}
                     tickLine={{ stroke: CHART_THEME.axis }}
+                    tickFormatter={formatWinsLabel}
+                    domain={[xAxisMin, xAxisMax]}
+                    ticks={xAxisTicks}
+                    allowDecimals={false}
                     style={{ fontSize: '11px' }}
                   />
                   <YAxis
@@ -111,13 +210,20 @@ export default function ScheduleLuckDistribution({ data }: ScheduleLuckDistribut
                     axisLine={{ stroke: CHART_THEME.axis }}
                     tickLine={{ stroke: CHART_THEME.axis }}
                     tickFormatter={formatPercent}
+                    domain={[0, yAxisMax]}
                     style={{ fontSize: '11px' }}
                   />
                   <Tooltip content={<ScheduleLuckTooltip />} />
-                  <Bar dataKey="frequency">
-                    {chartData.map((entry) => (
-                      <Cell key={entry.winsLabel} fill={entry.isActual ? ACTUAL_BAR_COLOR : SIM_BAR_COLOR} />
-                    ))}
+                  <Bar dataKey="frequency" minPointSize={1}>
+                    {chartData.map((entry) => {
+                      const fillColor = entry.isActual
+                        ? ACTUAL_BAR_COLOR
+                        : entry.frequency === 0
+                        ? 'transparent'
+                        : SIM_BAR_COLOR;
+
+                      return <Cell key={entry.winsLabel} fill={fillColor} />;
+                    })}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
