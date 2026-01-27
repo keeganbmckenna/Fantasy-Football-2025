@@ -1,6 +1,6 @@
 # Fantasy Football 2025 - Tangy Football
 
-A modern Next.js web application for analyzing Sleeper fantasy football league data with comprehensive statistics, interactive charts, and real-time updates.
+A modern Next.js web application for analyzing Sleeper fantasy football league data with comprehensive statistics, interactive charts, and postseason brackets.
 
 ## Features
 
@@ -8,6 +8,10 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 - 🏆 **Division Standings** - Division breakdown with team records, games/points back, and leader highlights
 - 🎯 **Wild Card Race** - Playoff picture with IN/OUT status and cutoff line
 - 🏈 **Weekly Matchups** - Expandable week-by-week results with scores and winners
+
+### Postseason Tab
+- 🏆 **Playoff Bracket** - Round-by-round playoff progression
+- 🚽 **Toilet Bowl Bracket** - Bracket for non-playoff teams with placement games
 
 ### Weekly Performance Tab
 - 📈 **Weekly Scores** - Score table with win/loss color coding and margin context
@@ -22,9 +26,6 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 - 🎲 **Play Everyone Analysis** - Hypothetical records if teams played all opponents weekly
 - 📋 **Weekly Play All** - Week-by-week theoretical records for consistency checks
 - 🎯 **Schedule Luck Distribution** - Simulated win distributions with actual record highlight
-
-### Transactions Tab
-- 🔄 **Status** - Currently hidden; transaction analysis needs more work to provide clear value
 
 ### UI & Experience
 - 🎨 **Theme Toggle** - Light, dark, and system theme support
@@ -44,6 +45,9 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 │   │   ├── page.tsx          # Main page with tabs
 │   │   └── layout.tsx        # App layout + theme bootstrap
 │   ├── components/           # React components
+│   │   ├── BracketView.tsx    # Shared bracket UI
+│   │   ├── PlayoffBracket.tsx
+│   │   ├── ToiletBowlBracket.tsx
 │   │   ├── ScheduleLuckDistribution.tsx
 │   │   ├── PlayEveryoneAnalysis.tsx
 │   │   ├── WeeklyPlayAll.tsx
@@ -51,7 +55,7 @@ A modern Next.js web application for analyzing Sleeper fantasy football league d
 │   │   └── ui/               # Shared UI pieces
 │   ├── hooks/                # Theme + chart helpers
 │   └── lib/                  # Utilities, API clients, and analytics
-│       ├── analyze.ts
+│       ├── analyze/          # Analytics + bracket modeling
 │       ├── config.ts
 │       ├── leagueSettings.ts
 │       └── theme.ts
@@ -131,6 +135,7 @@ The app will automatically fetch live data from the Sleeper API on each page loa
 - **Recharts** - Interactive charting library
 - **Sleeper API** - Fantasy football data source
 - **FantasyCalc API** - Trade value analytics
+- **Vitest** - Unit testing for analytics helpers
 - **Python** - Data fetching and analysis scripts
 
 ## Analytics Coverage
@@ -143,7 +148,7 @@ The app will automatically fetch live data from the Sleeper API on each page loa
 ### Advanced Analytics
 - Play-everyone and weekly play-all records
 - Schedule luck simulations with win distributions
-- Transaction analysis is temporarily disabled while refining insights
+- Transaction analysis tooling exists but is not currently surfaced in the UI
 
 ## Development Notes
 
