@@ -57,9 +57,9 @@ export default function WeeklyMatchups({ matchups }: WeeklyMatchupsProps) {
                   }`}
                 >
                   <div className="text-lg">{matchup.team1.name}</div>
-                    <div className="text-sm text-[var(--muted)]">
-                      @{matchup.team1.username}
-                    </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    @{matchup.team1.username}
+                  </div>
 
                   <div className="text-2xl font-bold mt-2">
                     {matchup.team1.points.toFixed(2)}
@@ -78,9 +78,9 @@ export default function WeeklyMatchups({ matchups }: WeeklyMatchupsProps) {
                   }`}
                 >
                   <div className="text-lg">{matchup.team2.name}</div>
-                    <div className="text-sm text-[var(--muted)]">
-                      @{matchup.team2.username}
-                    </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    @{matchup.team2.username}
+                  </div>
 
                   <div className="text-2xl font-bold mt-2">
                     {matchup.team2.points.toFixed(2)}

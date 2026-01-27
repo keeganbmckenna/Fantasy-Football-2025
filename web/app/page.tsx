@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import Image from 'next/image';
 import PlayoffRace from '@/components/PlayoffRace';
 import WeeklyScores from '@/components/WeeklyScores';
 import WeeklyMatchups from '@/components/WeeklyMatchups';
+import PlayoffBracket from '@/components/PlayoffBracket';
+import ToiletBowlBracket from '@/components/ToiletBowlBracket';
 import StandingsOverTime from '@/components/StandingsOverTime';
 import CumulativeScores from '@/components/CumulativeScores';
 import PointsVsMedian from '@/components/PointsVsMedian';
@@ -18,6 +20,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { LeagueData, TeamStats, WeekMatchup, PlayEveryoneStats, WeeklyPlayAllStats, DivisionStanding, WildCardStanding, ScheduleLuckSimulation } from '@/lib/types';
+import type { PostseasonBrackets } from '@/lib/analyze/brackets';
 import {
   calculateTeamStats,
   getWeeklyMatchups,
@@ -30,6 +33,7 @@ import {
   calculateDivisionStandings,
   calculateWildCardStandings,
   simulateScheduleLuck,
+  buildPostseasonBrackets,
 } from '@/lib/analyze';
 import { getLeagueSettings } from '@/lib/leagueSettings';
 
@@ -54,13 +58,14 @@ export default function Home() {
   const [scheduleLuckSimulation, setScheduleLuckSimulation] = useState<ScheduleLuckSimulation | null>(null);
   const [divisions, setDivisions] = useState<DivisionStanding[]>([]);
   const [wildCard, setWildCard] = useState<WildCardStanding[]>([]);
+  const [postseasonBrackets, setPostseasonBrackets] = useState<PostseasonBrackets | null>(null);
 
   const leagueSettings = leagueData ? getLeagueSettings(leagueData.league) : null;
   const regularSeasonWeekCap = leagueData && leagueSettings
     ? Math.min(leagueData.lastScoredWeek, leagueSettings.regularSeasonEnd)
     : undefined;
 
-  const fetchData = async (season?: string) => {
+  const fetchData = useCallback(async (season?: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -87,6 +92,9 @@ export default function Home() {
       // Get matchups
       const weeklyMatchups = getWeeklyMatchups(data);
       setMatchups(weeklyMatchups);
+
+      const postseason = buildPostseasonBrackets(data, leagueSettings);
+      setPostseasonBrackets(postseason);
 
       // Calculate additional analytics
       // Only count completed regular-season weeks for weekly analytics
@@ -116,7 +124,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleSeasonChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const season = event.target.value;
@@ -126,7 +134,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   if (loading) {
     return <LoadingSpinner message="Loading league data..." />;
@@ -145,6 +153,7 @@ export default function Home() {
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: '📊' },
+    { id: 'postseason', name: 'Postseason', icon: '🏆' },
     { id: 'weekly', name: 'Weekly Performance', icon: '📈' },
     { id: 'trends', name: 'Season Trends', icon: '📉' },
     { id: 'advanced', name: 'Advanced Stats', icon: '🔬' },
@@ -204,6 +213,7 @@ export default function Home() {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={`${
                     activeTab === tab.id
@@ -220,6 +230,7 @@ export default function Home() {
             {/* Mobile Navigation */}
             <div className="md:hidden">
               <button
+                type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="flex items-center justify-between w-full py-4 text-left"
                 aria-expanded={mobileMenuOpen}
@@ -234,6 +245,7 @@ export default function Home() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
+                  <title>Toggle menu</title>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -243,6 +255,7 @@ export default function Home() {
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
+                      type="button"
                       onClick={() => {
                         setActiveTab(tab.id);
                         setMobileMenuOpen(false);
@@ -284,6 +297,24 @@ export default function Home() {
                 <WeeklyMatchups matchups={matchups} />
               </section>
             </ErrorBoundary>
+          </>
+        )}
+
+        {/* Postseason Tab */}
+        {activeTab === 'postseason' && (
+          <>
+            <ErrorBoundary>
+              <section>
+                <PlayoffBracket brackets={postseasonBrackets} />
+              </section>
+            </ErrorBoundary>
+            {leagueSettings?.hasToiletBowl && (
+              <ErrorBoundary>
+                <section>
+                  <ToiletBowlBracket brackets={postseasonBrackets} />
+                </section>
+              </ErrorBoundary>
+            )}
           </>
         )}
 
