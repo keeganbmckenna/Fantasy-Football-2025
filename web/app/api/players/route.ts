@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { CACHE_CONFIG } from '@/lib/config';
+import { unstable_cache } from 'next/cache';
 
 interface SleeperPlayer {
   player_id?: string;
@@ -9,26 +9,10 @@ interface SleeperPlayer {
   position?: string;
 }
 
-// In-memory cache
-let cachedPlayerMap: Record<string, string> | null = null;
-let cachedPlayerPositions: Record<string, string> | null = null;
-let lastFetchTime: number = 0;
-
-export async function GET() {
-  try {
-    const now = Date.now();
-
-    // Return cached data if it's less than configured duration
-    if (cachedPlayerMap && cachedPlayerPositions && (now - lastFetchTime) < CACHE_CONFIG.playerData) {
-      return NextResponse.json({
-        players: cachedPlayerMap,
-        positions: cachedPlayerPositions
-      });
-    }
-
-    // Fetch fresh data - disable Next.js cache to avoid 2MB limit error
+const fetchPlayersData = unstable_cache(
+  async () => {
     const res = await fetch('https://api.sleeper.app/v1/players/nfl', {
-      cache: 'no-store'
+      next: { revalidate: 86400 }
     });
 
     if (!res.ok) {
@@ -37,13 +21,11 @@ export async function GET() {
 
     const players: Record<string, SleeperPlayer> = await res.json();
 
-    // Create maps for player names and positions
     const playerMap: Record<string, string> = {};
     const playerPositions: Record<string, string> = {};
 
     Object.entries(players).forEach(([id, player]) => {
       if (player.player_id) {
-        // Format: "FirstName LastName (Team POS)"
         const name = `${player.first_name || ''} ${player.last_name || ''}`.trim();
         const team = player.team || '';
         const position = player.position || '';
@@ -55,15 +37,16 @@ export async function GET() {
       }
     });
 
-    // Update cache
-    cachedPlayerMap = playerMap;
-    cachedPlayerPositions = playerPositions;
-    lastFetchTime = now;
+    return { players: playerMap, positions: playerPositions };
+  },
+  ['players-data'],
+  { revalidate: 86400, tags: ['players'] }
+);
 
-    return NextResponse.json({
-      players: playerMap,
-      positions: playerPositions
-    });
+export async function GET() {
+  try {
+    const data = await fetchPlayersData();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching player data:', error);
     return NextResponse.json(
