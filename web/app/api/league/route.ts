@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SLEEPER_CONFIG, CACHE_CONFIG } from '@/lib/config';
-import type { SleeperLeague, SleeperUser, SleeperRoster, SleeperMatchup } from '@/lib/types';
+import type { SleeperLeague, SleeperUser, SleeperRoster, SleeperMatchup, SleeperBracketMatchup } from '@/lib/types';
 
 const fetchLeague = async (baseUrl: string, leagueId: string) => {
   const response = await fetch(`${baseUrl}/league/${leagueId}`, {
@@ -48,18 +48,38 @@ export async function GET(request: NextRequest) {
 
     const targetLeagueId = targetLeague.league_id;
 
+    // Get current week or default to max configured weeks
+    const currentWeek = targetLeague.settings?.leg || maxWeeks;
+    const lastScoredWeek = targetLeague.settings?.last_scored_leg || currentWeek;
+
     // Fetch all data in parallel with configured cache
-    const [usersRes, rostersRes] = await Promise.all([
+    const isPlayoffs = (targetLeague.settings?.playoff_week_start ?? Infinity) <= currentWeek;
+    const isLiveWeek = currentWeek > lastScoredWeek;
+    const bracketRevalidate = (isPlayoffs && isLiveWeek)
+      ? CACHE_CONFIG.currentWeek
+      : CACHE_CONFIG.completedWeek;
+
+    const winnersBracketPromise = targetLeague.bracket_id
+      ? fetch(`${baseUrl}/league/${targetLeagueId}/winners_bracket`, {
+        next: { revalidate: bracketRevalidate },
+      }).then(res => (res.ok ? res.json() as Promise<SleeperBracketMatchup[]> : null))
+      : Promise.resolve(null);
+
+    const losersBracketPromise = targetLeague.loser_bracket_id
+      ? fetch(`${baseUrl}/league/${targetLeagueId}/losers_bracket`, {
+        next: { revalidate: bracketRevalidate },
+      }).then(res => (res.ok ? res.json() as Promise<SleeperBracketMatchup[]> : null))
+      : Promise.resolve(null);
+
+    const [usersRes, rostersRes, winnersBracket, losersBracket] = await Promise.all([
       fetch(`${baseUrl}/league/${targetLeagueId}/users`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
       fetch(`${baseUrl}/league/${targetLeagueId}/rosters`, { next: { revalidate: CACHE_CONFIG.leagueData } }),
+      winnersBracketPromise,
+      losersBracketPromise,
     ]);
 
     const users: SleeperUser[] = await usersRes.json();
     const rosters: SleeperRoster[] = await rostersRes.json();
-
-    // Get current week or default to max configured weeks
-    const currentWeek = targetLeague.settings?.leg || maxWeeks;
-    const lastScoredWeek = targetLeague.settings?.last_scored_leg || currentWeek;
 
     // Fetch matchups for all weeks
     const matchupPromises = [];
@@ -111,6 +131,8 @@ export async function GET(request: NextRequest) {
       lastScoredWeek,
       availableSeasons,
       divisionNames,
+      winnersBracket,
+      losersBracket,
     });
   } catch (error) {
     console.error('Error fetching league data:', error);
