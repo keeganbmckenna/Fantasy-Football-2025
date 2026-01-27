@@ -34,6 +34,25 @@ export interface SleeperMatchup {
   players?: string[];
 }
 
+export interface SleeperBracketFrom {
+  w?: number;
+  l?: number;
+  m?: number;
+  r?: number;
+}
+
+export interface SleeperBracketMatchup {
+  r: number;
+  m: number;
+  t1?: number | null | SleeperBracketFrom;
+  t2?: number | null | SleeperBracketFrom;
+  t1_from?: SleeperBracketFrom | null;
+  t2_from?: SleeperBracketFrom | null;
+  w?: number | null;
+  l?: number | null;
+  p?: number | null;
+}
+
 export interface SleeperLeague {
   league_id: string;
   name: string;
@@ -72,9 +91,12 @@ export interface LeagueData {
   lastScoredWeek: number;
   availableSeasons: string[];
   divisionNames?: Record<number, string>;
+  winnersBracket?: SleeperBracketMatchup[] | null;
+  losersBracket?: SleeperBracketMatchup[] | null;
 }
 
 export interface TeamStats {
+  rosterId: number;
   teamName: string;
   username: string;
   wins: number;
