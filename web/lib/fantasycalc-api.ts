@@ -1,12 +1,22 @@
 import { CACHE_CONFIG, RETRY_CONFIG } from './config';
 
-// Simple in-memory cache for FantasyCalc API responses
 interface CachedData {
   data: unknown;
   timestamp: number;
 }
 
+const MAX_CACHE_SIZE = 1000;
 const cache = new Map<string, CachedData>();
+
+function addToCache(key: string, data: unknown): void {
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey) {
+      cache.delete(oldestKey);
+    }
+  }
+  cache.set(key, { data, timestamp: Date.now() });
+}
 
 /**
  * Sleep helper for retry delays
@@ -116,12 +126,8 @@ export async function getHistoricalValues(
       return [];
     }
 
-    // Only cache if we got actual data
     if (data.historicalValues && data.historicalValues.length > 0) {
-      cache.set(cacheKey, {
-        data: data.historicalValues,
-        timestamp: Date.now(),
-      });
+      addToCache(cacheKey, data.historicalValues);
       console.log(`✓ Cached ${data.historicalValues.length} historical values for player ${playerId}`);
     }
 
@@ -249,12 +255,8 @@ async function fetchAllPlayers(): Promise<FantasyCalcPlayer[]> {
       return data;
     });
 
-    // Only cache if we got actual data (should always be true here due to validation above)
     if (players.length > 0) {
-      cache.set(cacheKey, {
-        data: players,
-        timestamp: Date.now(),
-      });
+      addToCache(cacheKey, players);
       console.log(`✓ Cached player list (${players.length} players)`);
     }
 
