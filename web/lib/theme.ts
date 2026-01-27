@@ -7,7 +7,7 @@ export const DEFAULT_THEME: ThemePreference = 'system';
 
 export type ResolvedTheme = 'light' | 'dark';
 
-export const DEFAULT_RESOLVED_THEME: ResolvedTheme = 'dark';
+export const DEFAULT_RESOLVED_THEME: ResolvedTheme = 'light';
 
 export const resolveThemePreference = (value: string | null): ThemePreference => {
   if (value === 'light' || value === 'dark' || value === 'system') {

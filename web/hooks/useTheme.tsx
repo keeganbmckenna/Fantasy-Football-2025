@@ -43,8 +43,7 @@ const applyThemeToDocument = (theme: ResolvedTheme) => {
 
 const getStoredPreference = () => {
   if (typeof window === 'undefined') {
-  return DEFAULT_RESOLVED_THEME;
-
+    return DEFAULT_THEME;
   }
 
   return resolveThemePreference(window.localStorage.getItem(THEME_STORAGE_KEY));
@@ -96,7 +95,7 @@ const useThemeState = (): ThemeContextValue => {
 
     const prefersDark = typeof window !== 'undefined'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
-      : true;
+      : false;
     const resolved = resolveThemeValue(nextPreference, prefersDark);
     setResolvedTheme(resolved);
     applyThemeToDocument(resolved);
