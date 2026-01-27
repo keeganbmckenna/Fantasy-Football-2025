@@ -1,6 +1,6 @@
 # Tangy Football - Web Application
 
-Modern Next.js web application for fantasy football analytics powered by the Sleeper API.
+Modern Next.js web application for fantasy football analytics and postseason brackets powered by the Sleeper API.
 
 ## Getting Started
 
@@ -51,7 +51,9 @@ web/
 ├── components/              # React components
 │   ├── ui/                  # Shared UI components
 │   │   └── SectionCard.tsx  # Reusable card component
-│   ├── AllTransactions.tsx  # Transaction timeline with filtering
+│   ├── BracketView.tsx      # Shared playoff/toilet bowl bracket UI
+│   ├── PlayoffBracket.tsx   # Playoff bracket wrapper
+│   ├── ToiletBowlBracket.tsx # Toilet bowl bracket wrapper
 │   ├── CumulativeScores.tsx
 │   ├── CustomTooltip.tsx
 │   ├── PlayEveryoneAnalysis.tsx
@@ -64,12 +66,15 @@ web/
 │   └── WeeklyScores.tsx
 ├── hooks/                   # Custom React hooks
 │   ├── useChartHover.ts     # Chart interaction state
-│   └── useTeamColors.ts     # Team color mapping
+│   ├── useTeamColors.ts     # Team color mapping
+│   └── useTheme.tsx         # Theme preference handling
 ├── lib/                     # Utilities and configuration
-│   ├── analyze.ts           # Statistical calculations
+│   ├── analyze/             # Analytics + postseason bracket modeling
+│   ├── __tests__/           # Vitest unit tests
 │   ├── transactionAnalyze.ts # Transaction processing
 │   ├── constants.ts         # Shared constants (colors, config)
 │   ├── config.ts            # App configuration
+│   ├── leagueSettings.ts    # League settings helpers
 │   └── types.ts             # TypeScript type definitions
 └── public/                  # Static assets
 ```
@@ -93,6 +98,7 @@ Get your league ID from your Sleeper league URL:
 - **Real-time Data**: Fetches live data from Sleeper API with smart caching
 - **Interactive Charts**: Hover over team names to highlight their performance across all visualizations
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Postseason Brackets**: Playoff + toilet bowl brackets with placement games
 - **Smart Caching**: CDN and in-memory caching for optimal performance without stale data
 
 ### Analytics Tabs
@@ -102,27 +108,23 @@ Get your league ID from your Sleeper league URL:
    - Wild card playoff race tracking
    - Weekly head-to-head matchups
 
-2. **Weekly Performance**
+2. **Postseason**
+   - Playoff bracket with round progression
+   - Toilet bowl bracket and placement games
+
+3. **Weekly Performance**
    - Weekly scoring charts for all teams
    - Rankings heatmap showing performance trends
 
-3. **Season Trends**
+4. **Season Trends**
    - Standings progression over time
    - Cumulative scoring charts
    - Points vs. median performance
 
-4. **Advanced Stats**
+5. **Advanced Stats**
    - Play-everyone record (record if you played all teams each week)
    - Weekly play-all win percentages
    - Luck analysis
-
-5. **Transactions**
-   - Complete transaction timeline
-   - Filter by: All, Trades, or Adds/Drops
-   - Player name resolution
-   - FAAB spending tracking
-   - Combined add+drop display as swaps
-   - Expandable trade details showing both sides
 
 ## Tech Stack
 
@@ -130,6 +132,7 @@ Get your league ID from your Sleeper league URL:
 - **TypeScript** - Type-safe development
 - **Tailwind CSS 4** - Utility-first styling
 - **Recharts** - Interactive data visualizations
+- **Vitest** - Unit testing framework
 - **Sleeper API** - Fantasy football data source with smart caching
 
 ## Development
@@ -139,7 +142,7 @@ Get your league ID from your Sleeper league URL:
 - Components are organized by feature and reusability
 - Shared logic extracted into custom hooks
 - Constants centralized in `lib/constants.ts`
-- All data calculations in `lib/analyze.ts`
+- All data calculations in `lib/analyze/`
 
 ### Key Patterns
 
